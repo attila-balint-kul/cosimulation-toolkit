@@ -18,7 +18,7 @@ def step(id: str, n: int = 1, input_values: dict[str, FMUInputType] = Body({})):
     except Exception as e:
         logger.exception(e)
         return JSONResponse(status_code=500, content={"error": str(e)})
-    return result
+    return JSONResponse(status_code=200, content=result)
 
 
 @router.post("/advance")
@@ -28,17 +28,17 @@ def advance(id: str, until: int, input_values: dict[str, FMUInputType] = Body({}
     except ValueError as e:
         logger.exception(e)
         return JSONResponse(status_code=500, content={"error": str(e)})
-    return result
+    return JSONResponse(status_code=200, content=result)
 
 
 @router.put("/parameters")
 def change_parameters(id: str, parameters: dict[str, FMUInputType] = Body({})):
     try:
-        result = db.get_simulator(id).change_parameters(**parameters)
+        db.get_simulator(id).change_parameters(**parameters)
     except ValueError as e:
         logger.exception(e)
         return JSONResponse(status_code=500, content={"error": str(e)})
-    return result
+    return JSONResponse(status_code=200, content={"message": "Success"})
 
 
 @router.post("/reset")

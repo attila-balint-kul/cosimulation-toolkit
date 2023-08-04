@@ -13,7 +13,8 @@ class SimulatorDB:
         self._db: dict[str, Record] = {}
 
     def close(self) -> None:
-        for key in self._db:
+        keys = list(self._db.keys())
+        for key in keys:
             del self._db[key]
 
     def create(
