@@ -5,8 +5,11 @@
 #################################################################################
 
 PROJECT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-PROJECT_NAME = fmu-toolkit
+PROJECT_NAME = cosimulation-toolkit
 PACKAGE_NAME = cosimtlk
+PACKAGE_VERSION := $(shell hatch version)
+DOCKER_REPOSITORY = attilabalint/$(PACKAGE_NAME)
+
 
 #################################################################################
 # COMMANDS                                                                      #
@@ -55,6 +58,18 @@ publish: build
 ## Upload source distribution and wheel to TestPyPI
 publish-test: build
 	hatch publish --repo test
+
+image:
+	docker build --build-arg PYPI_VERSION=$(PACKAGE_VERSION) -t $(DOCKER_REPOSITORY):v$(PACKAGE_VERSION) .
+
+push-image:
+	docker push $(DOCKER_REPOSITORY):v$(PACKAGE_VERSION)
+
+pull-image:
+	docker pull $(DOCKER_REPOSITORY):v$(PACKAGE_VERSION)
+
+container:
+	docker run -it -v ./examples/fmus:/home/cosimtlk/fmus -p 3000:8000 --rm $(DOCKER_REPOSITORY):v$(PACKAGE_VERSION)
 
 
 #################################################################################
