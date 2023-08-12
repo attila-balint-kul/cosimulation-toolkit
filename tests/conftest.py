@@ -1,6 +1,6 @@
 import pytest
 
-from cosimtlk.simulator import FMUSimulator
+from cosimtlk.simulators import FMUSimulator
 
 
 @pytest.fixture(scope="function")
