@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
-from cosimtlk.simulator import FMUSimulator
+from cosimtlk.simulators import FMUSimulator
 
 Record = dict[str, Any]
 
