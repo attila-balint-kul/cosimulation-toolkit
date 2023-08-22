@@ -28,20 +28,20 @@ clean:
 
 ## Format using black
 format:
-	ruff src tests --fix
-	black src tests
-	isort src tests
+	ruff cosimtlk tests --fix
+	black cosimtlk tests
+	isort cosimtlk tests
 
 ## Lint using ruff, mypy, black, and isort
 lint: format
-	mypy src
-	ruff src tests
-	black src tests --check
-	isort src tests --check-only
+	mypy cosimtlk
+	ruff cosimtlk tests
+	black cosimtlk tests --check
+	isort cosimtlk tests --check-only
 
 ## Run pytest with coverage
 tests:
-	pytest src tests
+	pytest --cov=cosimtlk tests/
 
 #################################################################################
 # PROJECT RULES                                                                 #
@@ -62,14 +62,14 @@ publish-test: build
 image:
 	docker build --build-arg PYPI_VERSION=$(PACKAGE_VERSION) -t $(DOCKER_REPOSITORY):v$(PACKAGE_VERSION) .
 
-push-image:
+push-image: image
 	docker push $(DOCKER_REPOSITORY):v$(PACKAGE_VERSION)
 
 pull-image:
 	docker pull $(DOCKER_REPOSITORY):v$(PACKAGE_VERSION)
 
-container:
-	docker run -it -v ./examples/fmus:/home/cosimtlk/fmus -p 3000:8000 --rm $(DOCKER_REPOSITORY):v$(PACKAGE_VERSION)
+container: image
+	docker run -it -v ./examples/fmus:/home/cosimtlk/fmus -p 8000:8000 --rm $(DOCKER_REPOSITORY):v$(PACKAGE_VERSION)
 
 
 #################################################################################

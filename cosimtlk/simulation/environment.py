@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any
+from typing import Any, Union, Optional
 from zoneinfo import ZoneInfo
 
 import simpy as sp
@@ -10,7 +10,6 @@ from tqdm import tqdm
 
 
 class Environment(sp.Environment):
-
     def __init__(self, initial_time: int = 0, tzinfo: ZoneInfo = ZoneInfo("UTC")):
         """Execution environment for an event-based simulation. The passing of time
         is simulated by stepping from event to event.
@@ -34,7 +33,9 @@ class Environment(sp.Environment):
 
         This property is not used in this subclass and is made internal. Use simulation_timestamp instead.
         """
-        raise AttributeError("Now is used internally, use simulation_time instead to access the current time.")
+        raise AttributeError(
+            "Now is used internally, use simulation_time instead to access the current time."
+        )
 
     @property
     def simulation_timestamp(self) -> int:
@@ -48,9 +49,9 @@ class Environment(sp.Environment):
 
     def run(
         self,
-        until: SimTime | Event | None = None,
+        until: Union[SimTime, Event, None] = None,
         progress_bar: bool = True,
-    ) -> Any | None:
+    ) -> Optional[Any]:
         """Run the environment until the given event or time.
 
         Args:

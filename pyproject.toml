@@ -9,8 +9,8 @@ authors = [
     { author = "Attila Balint", email = "attila.balint@kuleuven.be" },
 ]
 readme = "README.md"
-packages = [{ include = "cosimtlk", from = "src" }]
-requires-python = ">=3.8"
+packages = [{ include = "cosimtlk" }]
+requires-python = ">=3.9"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
@@ -27,6 +27,7 @@ classifiers = [
 dependencies = [
     "attrs>=23.0.0,<24.0.0",
     "FMPy>=0.3.0,<1.0.0",
+    "pandas>=1.4.0,<=3.1.0",
     "simpy>=4.0.0,<5.0.0",
     "tqdm>=4.0.0,<5.0.0",
 ]
@@ -43,12 +44,13 @@ server = [
     "pydantic-settings>=2.0.0,<3.0.0",
 ]
 test = [
-    "black==23.3.0",
+    "black==23.7.0",
     "isort==5.12.0",
     "httpx==0.24.1",
     "mypy==1.4.0",
-    "ruff==0.0.274",
+    "ruff==0.0.285",
     "pytest==7.3.2",
+    "pytest-cov==4.1.0",
 ]
 dev = [
     "twine>=4.0.0,<5.0.0",
@@ -57,7 +59,7 @@ dev = [
 
 
 [tool.hatch.version]
-path = "src/cosimtlk/__version__.py"
+path = "cosimtlk/__version__.py"
 
 [tool.hatch.build]
 exclude = [
@@ -66,7 +68,7 @@ exclude = [
 
 [tool.hatch.build.targets.sdist]
 only-include = [
-    "src/",
+    "cosimtlk/",
     "tests/",
     "LICENSE",
     "Makefile",
@@ -111,7 +113,7 @@ ban-relative-imports = "all"
 
 [tool.mypy]
 python_version = "3.10"
-files = ["src/cosimtlk"]
+files = ["cosimtlk"]
 disallow_untyped_defs = false
 disallow_incomplete_defs = false
 follow_imports = "normal"
@@ -138,10 +140,10 @@ filterwarnings = ["error"]
 branch = true
 source_pkgs = [
     "cosimtlk",
-    "tests",
 ]
 
 [tool.coverage.report]
+show_missing = true
 exclude_lines = [
     "no cov",
     "if __name__ == .__main__.:",

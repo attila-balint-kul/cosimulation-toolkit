@@ -1,10 +1,8 @@
-from __future__ import annotations
-
 import functools
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from cron_converter import Cron
+import cron_converter
 
 
 def with_tz(dt: datetime, tzinfo: ZoneInfo = ZoneInfo("UTC")) -> datetime:
@@ -23,24 +21,29 @@ def every(*, seconds: int = 0, minutes: int = 0, hours: int = 0, days: int = 0):
     total_delay_seconds = seconds + minutes * 60 + hours * 3600 + days * 86400
     assert total_delay_seconds > 0, "At least one time unit must be specified."
 
-    def decorator_schedule(func):
+    def decorator(func):
+        """Decorator to schedule a process to run forever with a given delay."""
+
         @functools.wraps(func)
-        def wrapper(self, *args, **kwargs):
+        def wrapped(self, *args, **kwargs):
+            """Wrapper to schedule a process to run forever with a given delay."""
             while True:
                 func(self, *args, **kwargs)
                 yield self.env.timeout(total_delay_seconds)
 
-        return wrapper
+        return wrapped
 
-    return decorator_schedule
+    return decorator
 
 
 def cron(*, minute="*", hour="*", day="*", month="*", weekday="*"):
     """Decorator to schedule a process to run forever with a given cron expression."""
-    cron_str = " ".join([minute.strip(), hour.strip(), day.strip(), month.strip(), weekday.strip()])
-    cron_instance = Cron(cron_str)
+    cron_str = " ".join(
+        [minute.strip(), hour.strip(), day.strip(), month.strip(), weekday.strip()]
+    )
+    cron_instance = cron_converter.Cron(cron_str)
 
-    def decorator_cron(func):
+    def decorator(func):
         @functools.wraps(func)
         def wrapper(self, *args, **kwargs):
             # To return the simulation time as first date if exact match
@@ -55,4 +58,4 @@ def cron(*, minute="*", hour="*", day="*", month="*", weekday="*"):
 
         return wrapper
 
-    return decorator_cron
+    return decorator
