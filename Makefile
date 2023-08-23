@@ -69,7 +69,7 @@ pull-image:
 	docker pull $(DOCKER_REPOSITORY):v$(PACKAGE_VERSION)
 
 container: image
-	docker run -it -v ./examples/fmus:/home/cosimtlk/fmus -p 8000:8000 --rm $(DOCKER_REPOSITORY):v$(PACKAGE_VERSION)
+	docker run -it -v ./fmus:/home/cosimtlk/fmus -p 8000:8000 --rm $(DOCKER_REPOSITORY):v$(PACKAGE_VERSION)
 
 
 #################################################################################
