@@ -26,6 +26,7 @@ classifiers = [
 ]
 dependencies = [
     "attrs>=23.0.0,<24.0.0",
+    "cron_converter>=1.0.0,<2.0.0",
     "FMPy>=0.3.0,<1.0.0",
     "pandas>=1.4.0,<=3.1.0",
     "simpy>=4.0.0,<5.0.0",

@@ -7,8 +7,8 @@ RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 RUN pip install --upgrade pip setuptools
 
-ARG PYPI_VERSION=0.1.2
-RUN pip install --no-cache-dir cosimtlk==${PYPI_VERSION}
+ARG PYPI_VERSION=0.2.2
+RUN pip install --no-cache-dir cosimtlk["server"]==${PYPI_VERSION}
 
 RUN useradd --create-home cosimtlk
 USER cosimtlk
