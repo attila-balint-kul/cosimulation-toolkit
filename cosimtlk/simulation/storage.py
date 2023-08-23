@@ -1,12 +1,10 @@
-from typing import Any, Union, Optional
+from typing import Any, Optional
 from zoneinfo import ZoneInfo
 
 import pandas as pd
-from pandas import Series, DataFrame
+from pandas import DataFrame, Series
 
-from cosimtlk.models import DateTimeLike
-
-Observation = Union[float, int, bool, str]
+from cosimtlk.models import DateTimeLike, FMUInputType
 
 
 class StateStore:
@@ -62,12 +60,10 @@ class StateStore:
             current_dict = current_dict.get(key, {})
         return current_dict
 
-    def get(self, *key: str, namespace: Optional[str] = None) -> Union[Any, dict[str, Any]]:
+    def get(self, key: str, namespace: Optional[str] = None) -> Any:
         if namespace is not None:
-            key = [f"{namespace}{self.namespace_separator}{k}" for k in key]
-        if len(key) == 1:
-            return self.__getitem__(key[0])
-        return {k: self.__getitem__(k) for k in key}
+            key = self.make_namespace(namespace, key)
+        return self.__getitem__(key)
 
     def delete(self, *key: str, namespace: Optional[str] = None) -> None:
         if namespace is not None:
@@ -102,14 +98,14 @@ class ObservationStore:
 
             self._db[key] = history_
 
-    def store_observation(self, key: str, value: Observation, ts: DateTimeLike) -> None:
+    def store_observation(self, key: str, value: FMUInputType, ts: DateTimeLike) -> None:
         if ts.tzinfo is None:
             ts = ts.replace(tzinfo=ZoneInfo("UTC"))
         if key not in self._db:
             self._db[key] = pd.Series(name=key, index=[ts], data=[value]).rename_axis("timestamp")
         self._db[key][ts] = value
 
-    def store_observations(self, ts: DateTimeLike, **values: Observation) -> None:
+    def store_observations(self, ts: DateTimeLike, **values: FMUInputType) -> None:
         for key, value in values.items():
             self.store_observation(key, value, ts)
 
@@ -185,6 +181,6 @@ class ScheduleStore:
             mask = (self._db[key].index >= made_after) & (self._db[key].index <= made_before)
         return self._db[key].loc[mask]
 
-    def get_last_schedule(self, key: str, made_at: DateTimeLike) -> Observation:
+    def get_last_schedule(self, key: str, made_at: DateTimeLike) -> FMUInputType:
         last_made_at = (self._db[key]["made_at"].unique() <= made_at).max()
         return self._db[key].loc["made_at" == last_made_at, key]

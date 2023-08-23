@@ -1,5 +1,5 @@
 from .simulation import SimulationRunner
-from .wrapper import FMIWrapper
+from .wrappers import FMIWrapper
 
 __all__ = [
     "SimulationRunner",

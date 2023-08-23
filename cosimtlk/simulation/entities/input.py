@@ -1,7 +1,7 @@
 import logging
 from typing import Callable, Generator, Union
 
-from pandas import Series, DataFrame
+from pandas import DataFrame, Series
 
 from cosimtlk.simulation.entities import Entity
 from cosimtlk.simulation.storage import StateStore

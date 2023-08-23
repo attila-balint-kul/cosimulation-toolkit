@@ -52,12 +52,18 @@ def test_set_get_single(state_store):
 
 def test_set_get_multiple(state_store):
     state_store.set(a=1, b=2)
-    assert state_store.get("a", "b") == {"a": 1, "b": 2}
+    assert state_store.get("a") == 1
+    assert state_store.get("b") == 2
     state_store.set(a=2, b=3)
-    assert state_store.get("a", "b") == {"a": 2, "b": 3}
+    assert state_store.get("a") == 2
+    assert state_store.get("b") == 3
 
 
 def test_set_get_single_with_namespace(state_store):
     state_store.set(namespace="a", b=1)
     assert state_store.get("a:b") == 1
     assert state_store.get("b", namespace="a") == 1
+
+
+if __name__ == "__main__":
+    pytest.main()

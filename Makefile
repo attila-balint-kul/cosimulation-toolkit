@@ -34,7 +34,7 @@ format:
 
 ## Lint using ruff, mypy, black, and isort
 lint: format
-	mypy cosimtlk
+	mypy cosimtlk --check-untyped-defs
 	ruff cosimtlk tests
 	black cosimtlk tests --check
 	isort cosimtlk tests --check-only

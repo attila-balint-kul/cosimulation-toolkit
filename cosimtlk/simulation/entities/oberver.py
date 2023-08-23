@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABCMeta
-from queue import Queue, Empty
+from queue import Empty, Queue
 from typing import Protocol
 
 from cosimtlk.simulation.entities import Entity
@@ -32,7 +32,7 @@ class EventBus:
 class Observer(Entity, metaclass=ABCMeta):
     def __init__(self, name: str):
         super().__init__(name)
-        self.queue = Queue()
+        self.queue: Queue = Queue()
 
     def notify(self, message: dict):
         return self.queue.put(message)

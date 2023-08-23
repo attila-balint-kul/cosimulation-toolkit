@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import logging
-from typing import Callable, Generator, TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable, Generator
 
-from cosimtlk.simulation.entities import Entity
-from cosimtlk.wrapper import FMIWrapper
 from cosimtlk.models import FMUInputType
+from cosimtlk.simulation.entities import Entity
+from cosimtlk.wrappers import FMIWrapper
 
 if TYPE_CHECKING:
     from cosimtlk.simulation.storage import StateStore
@@ -23,9 +23,9 @@ class FMUEntity(Entity):
         step_size: int,
         simulation_step_size: int,
         state_store: StateStore,
-        namespace: str | tuple[str] | None = None,
-        input_namespace: str | tuple[str] = "inputs",
-        output_namespace: str | tuple[str] = "outputs",
+        namespace: str | None = None,
+        input_namespace: str = "inputs",
+        output_namespace: str = "outputs",
     ):
         super().__init__(name)
         # Simulator inputs

@@ -14,7 +14,7 @@ def db():
 
 
 def test_store_history_without_tz(db):
-    history = fake_data(columns=['a'])
+    history = fake_data(columns=["a"])
 
     db.store_history(a=history.a)
 
@@ -26,7 +26,7 @@ def test_store_history_without_tz(db):
 
 
 def test_store_history_with_tz(db):
-    history = fake_data(columns=['a'], tz=ZoneInfo("Europe/Brussels"))
+    history = fake_data(columns=["a"], tz=ZoneInfo("Europe/Brussels"))
 
     db.store_history(a=history.a)
 

@@ -4,7 +4,7 @@ import functools
 from typing import Callable, Generator
 
 from cosimtlk.simulation.entities import Entity
-from cosimtlk.simulation.storage import StateStore, ObservationStore
+from cosimtlk.simulation.storage import ObservationStore, StateStore
 
 
 class Sensor(Entity):

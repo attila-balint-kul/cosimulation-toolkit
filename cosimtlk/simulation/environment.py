@@ -1,10 +1,10 @@
 from datetime import datetime
-from typing import Any, Union, Optional
+from typing import Any, Optional, Union
 from zoneinfo import ZoneInfo
 
 import simpy as sp
 from simpy import Event
-from simpy.core import SimTime, StopSimulation, EmptySchedule
+from simpy.core import EmptySchedule, SimTime, StopSimulation
 from simpy.events import URGENT
 from tqdm import tqdm
 
@@ -28,7 +28,7 @@ class Environment(sp.Environment):
         self.tzinfo = tzinfo
 
     @property
-    def now(self) -> None:
+    def now(self) -> SimTime:
         """The current simulation time as a float.
 
         This property is not used in this subclass and is made internal. Use simulation_timestamp instead.

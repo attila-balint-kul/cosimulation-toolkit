@@ -6,9 +6,9 @@ import numpy as np
 from simpy.util import start_delayed
 
 from cosimtlk.models import DateTimeLike
+from cosimtlk.simulation.entities import Entity
 from cosimtlk.simulation.environment import Environment
 from cosimtlk.simulation.utils import with_tz
-from cosimtlk.simulation.entities import Entity
 
 
 class SimulationRunner:

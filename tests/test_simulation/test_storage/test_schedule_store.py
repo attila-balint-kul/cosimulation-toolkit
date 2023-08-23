@@ -14,10 +14,7 @@ def db():
 
 def test_store_history_without_tz(db):
     history = fake_schedule(
-        made_at=[
-            pd.Timestamp("2021-01-01 00:00:00"),
-            pd.Timestamp("2021-01-01 01:00:00")
-        ],
+        made_at=[pd.Timestamp("2021-01-01 00:00:00"), pd.Timestamp("2021-01-01 01:00:00")],
         columns=["a", "b"],
     )
     db.store_history(schedule=history)
@@ -30,12 +27,9 @@ def test_store_history_without_tz(db):
 
 def test_store_history_with_tz(db):
     history = fake_schedule(
-        made_at=[
-            pd.Timestamp("2021-01-01 00:00:00"),
-            pd.Timestamp("2021-01-01 01:00:00")
-        ],
+        made_at=[pd.Timestamp("2021-01-01 00:00:00"), pd.Timestamp("2021-01-01 01:00:00")],
         columns=["a", "b"],
-        tz=ZoneInfo("Europe/Brussels")
+        tz=ZoneInfo("Europe/Brussels"),
     )
     db.store_history(schedule=history)
 
