@@ -17,7 +17,7 @@ router = APIRouter(prefix="/fmus", tags=["FMUs"])
 def list(fmu_dir: Annotated[Path, Depends(get_fmu_dir)]):
     return {
         "path": fmu_dir,
-        "fmus": [fmu.name for fmu in fmu_dir.glob("*.fmu")],
+        "fmus": sorted([fmu.stem for fmu in fmu_dir.glob("*.fmu")]),
     }
 
 
