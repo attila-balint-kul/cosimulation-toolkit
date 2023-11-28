@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Optional, Union
+from typing import Any
 
 from cosimtlk.app.client import SimulatorClient
 from cosimtlk.models import FMUInputType
@@ -18,9 +18,9 @@ class RemoteFMIWrapper(Wrapper):
 
     def initialize(
         self,
-        start_values: Optional[dict[str, FMUInputType]] = None,
-        start_time: Union[int, float] = 0,
-        step_size: Union[int, float] = 1,
+        start_values: dict[str, FMUInputType] | None = None,
+        start_time: int | float = 0,
+        step_size: int | float = 1,
     ) -> None:
         simulator = self.client.create_simulator(
             self._fmu_path, start_values=start_values, start_time=start_time, step_size=step_size
@@ -59,32 +59,27 @@ class RemoteFMIWrapper(Wrapper):
     def reset(
         self,
         *,
-        start_values: Optional[dict[str, FMUInputType]] = None,
-        start_time: Union[int, float] = 0,
-        step_size: Union[int, float] = 1,
+        start_values: dict[str, FMUInputType] | None = None,
+        start_time: int | float = 0,
+        step_size: int | float = 1,
     ) -> None:
         self._check_is_initialized()
-        self.client.reset(
-            self._id, start_values=start_values, start_time=start_time, step_size=step_size
-        )
+        self.client.reset(self._id, start_values=start_values, start_time=start_time, step_size=step_size)
         self._step_size = step_size
         self._current_time = start_time
 
     def _check_is_initialized(self):
         if self._id is None:
-            raise RuntimeError("FMU is not initialized.")
+            msg = "FMU is not initialized."
+            raise RuntimeError(msg)
 
-    def step(
-        self, *, input_values: Optional[dict[str, FMUInputType]] = None
-    ) -> dict[str, FMUInputType]:
+    def step(self, *, input_values: dict[str, FMUInputType] | None = None) -> dict[str, FMUInputType]:
         self._check_is_initialized()
         result = self.client.step(self._id, input_values=input_values)
         self._current_time = result["current_time"]
         return result
 
-    def advance(
-        self, until: int, *, input_values: Optional[dict[str, FMUInputType]] = None
-    ) -> dict[str, FMUInputType]:
+    def advance(self, until: int, *, input_values: dict[str, FMUInputType] | None = None) -> dict[str, FMUInputType]:
         self._check_is_initialized()
         result = self.client.advance(self._id, until, input_values=input_values)
         self._current_time = result["current_time"]

@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from abc import ABCMeta, abstractmethod
-from typing import TYPE_CHECKING, Callable, Generator, Optional
+from collections.abc import Callable, Generator
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from cosimtlk.simulation import Environment
@@ -22,7 +23,7 @@ class Entity(metaclass=ABCMeta):
             name: Name of the entity for identification purposes.
         """
         self._name = name
-        self._env: Optional[Environment] = None
+        self._env: Environment | None = None
 
     def __repr__(self):
         """Representation of the entity."""

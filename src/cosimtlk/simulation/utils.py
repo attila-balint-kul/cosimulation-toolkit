@@ -1,25 +1,32 @@
 import functools
-from datetime import datetime, timedelta
+from datetime import timedelta
 from zoneinfo import ZoneInfo
 
 import cron_converter
 
+from cosimtlk.models import DateTimeLike
 
-def with_tz(dt: datetime, tzinfo: ZoneInfo = ZoneInfo("UTC")) -> datetime:
+UTC = ZoneInfo("UTC")
+
+
+def ensure_tz(dt: DateTimeLike, default_tz: ZoneInfo = UTC) -> DateTimeLike:
     """Add timezone information to a datetime object if missing.
 
     Args:
         dt: Datetime object with or without timezone information.
-        tzinfo: Timezone information to add in case the datetime object has no timezone info.
+        default_tz: Timezone information to add in case the datetime object has no timezone info.
     """
-    tzinfo = dt.tzinfo or tzinfo
-    return dt.replace(tzinfo=tzinfo)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=default_tz)
+    return dt
 
 
 def every(*, seconds: int = 0, minutes: int = 0, hours: int = 0, days: int = 0):
     """Decorator to schedule a process to run forever with a given delay."""
     total_delay_seconds = seconds + minutes * 60 + hours * 3600 + days * 86400
-    assert total_delay_seconds > 0, "At least one time unit must be specified."
+    if total_delay_seconds <= 0:
+        msg = "At least one time unit must be specified."
+        raise ValueError(msg)
 
     def decorator(func):
         """Decorator to schedule a process to run forever with a given delay."""
@@ -38,16 +45,14 @@ def every(*, seconds: int = 0, minutes: int = 0, hours: int = 0, days: int = 0):
 
 def cron(*, minute="*", hour="*", day="*", month="*", weekday="*"):
     """Decorator to schedule a process to run forever with a given cron expression."""
-    cron_str = " ".join(
-        [minute.strip(), hour.strip(), day.strip(), month.strip(), weekday.strip()]
-    )
+    cron_str = " ".join([minute.strip(), hour.strip(), day.strip(), month.strip(), weekday.strip()])
     cron_instance = cron_converter.Cron(cron_str)
 
     def decorator(func):
         @functools.wraps(func)
         def wrapper(self, *args, **kwargs):
             # To return the simulation time as first date if exact match
-            last_run = self.env.simulation_datetime
+            last_run = self.env.current_datetime
             schedule = cron_instance.schedule(last_run - timedelta(seconds=1))
             while True:
                 next_run = schedule.next()

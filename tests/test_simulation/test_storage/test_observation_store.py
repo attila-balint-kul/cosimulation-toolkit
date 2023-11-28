@@ -59,3 +59,7 @@ def test_get_set_observation_with_tz(db):
     assert observations.name == "a"
     assert observations.index.name == "timestamp"
     assert observations.index.tzinfo == ZoneInfo("Europe/Brussels")
+
+
+if __name__ == "__main__":
+    pytest.main()

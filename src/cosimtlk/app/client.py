@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any
 
 import requests
 
@@ -53,7 +53,6 @@ class SimulatorClient:
         response = self.session.delete(self.base_url + path, **kwargs)
         if not response.ok:
             response.raise_for_status()
-        return None
 
     def list_fmus(self) -> dict[str, Any]:
         return self._get("/fmus")
@@ -68,7 +67,7 @@ class SimulatorClient:
         self,
         path: str,
         *,
-        start_values: Optional[dict[str, FMUInputType]] = None,
+        start_values: dict[str, FMUInputType] | None = None,
         start_time: int = 0,
         step_size: int = 1,
     ) -> SimulatorModel:
@@ -81,28 +80,31 @@ class SimulatorClient:
         response = self._post("/simulators/", params=params, body=body)
         return SimulatorModel(**response)
 
-    def get_simulator(self, id: str):
+    def get_simulator(self, id: str):  # noqa: A002
         response = self._get(f"/simulators/{id}")
         return SimulatorModel(**response)
 
-    def delete_simulator(self, id: str) -> None:
+    def delete_simulator(self, id: str) -> None:  # noqa: A002
         return self._delete(f"/simulators/{id}")
 
-    def get_outputs(self, id: str) -> dict[str, FMUInputType]:
+    def get_outputs(self, id: str) -> dict[str, FMUInputType]:  # noqa: A002
         return self._get(f"/simulators/{id}/outputs")
 
     def step(
-        self, id: str, *, input_values: Optional[dict[str, FMUInputType]] = None
+        self,
+        id: str,  # noqa: A002
+        *,
+        input_values: dict[str, FMUInputType] | None = None,
     ) -> dict[str, FMUInputType]:
         body = input_values or {}
         return self._post(f"/simulators/{id}/step", body=body)
 
     def advance(
         self,
-        id: str,
+        id: str,  # noqa: A002
         until: int,
         *,
-        input_values: Optional[dict[str, FMUInputType]] = None,
+        input_values: dict[str, FMUInputType] | None = None,
     ):
         params = {"until": until}
         body = input_values or {}
@@ -110,7 +112,7 @@ class SimulatorClient:
 
     def change_parameters(
         self,
-        id: str,
+        id: str,  # noqa: A002
         *,
         parameters: dict[str, FMUInputType],
     ):
@@ -119,9 +121,9 @@ class SimulatorClient:
 
     def reset(
         self,
-        id: str,
+        id: str,  # noqa: A002
         *,
-        start_values: Optional[dict[str, FMUInputType]] = None,
+        start_values: dict[str, FMUInputType] | None = None,
         start_time: int = 0,
         step_size: int = 1,
     ):

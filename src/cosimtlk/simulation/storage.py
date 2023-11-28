@@ -1,18 +1,24 @@
-from typing import Any, Optional
+from typing import Any
 from zoneinfo import ZoneInfo
 
 import pandas as pd
 from pandas import DataFrame, Series
 
 from cosimtlk.models import DateTimeLike, FMUInputType
+from cosimtlk.simulation.utils import ensure_tz
 
 
 class StateStore:
     def __init__(self, namespace_separator: str = ":") -> None:
         """A simple state store that allows to store and retrieve values by key and a namespace."""
         if namespace_separator is None or namespace_separator == "":
-            raise ValueError("The namespace separator cannot be None or an empty string.")
-        assert len(namespace_separator) == 1, "The namespace separator must be a single character."
+            msg = "The namespace separator cannot be None or an empty string."
+            raise ValueError(msg)
+
+        if len(namespace_separator) != 1:
+            msg = "The namespace separator must be a single character."
+            raise ValueError(msg)
+
         self.namespace_separator = namespace_separator
         self._state: dict[str, Any] = {}
 
@@ -51,7 +57,7 @@ class StateStore:
         else:
             self._state.pop(key, None)
 
-    def get_all(self, *, namespace: Optional[str] = None) -> dict[str, Any]:
+    def get_all(self, *, namespace: str | None = None) -> dict[str, Any]:
         if namespace is None:
             return self._state
         current_dict = self._state
@@ -60,22 +66,24 @@ class StateStore:
             current_dict = current_dict.get(key, {})
         return current_dict
 
-    def get(self, key: str, namespace: Optional[str] = None) -> Any:
+    def get(self, key: str, namespace: str | None = None) -> Any:
         if namespace is not None:
             key = self.make_namespace(namespace, key)
         return self.__getitem__(key)
 
-    def delete(self, *key: str, namespace: Optional[str] = None) -> None:
+    def delete(self, *key: str, namespace: str | None = None) -> None:
         if namespace is not None:
             key = [f"{namespace}{self.namespace_separator}{k}" for k in key]
         for k in key:
             del self[k]
 
-    def set(self, namespace: Optional[str] = None, **states: Any) -> None:
+    def set(self, namespace: str | None = None, **states: Any) -> None:  # noqa: A003
         for key, value in states.items():
             if namespace is not None:
-                key = f"{namespace}{self.namespace_separator}{key}"
-            self[key] = value
+                namespaced_key = f"{namespace}{self.namespace_separator}{key}"
+            else:
+                namespaced_key = key
+            self[namespaced_key] = value
 
 
 class ObservationStore:
@@ -90,7 +98,9 @@ class ObservationStore:
 
     def store_history(self, **history: Series):
         for key, history_ in history.items():
-            assert isinstance(history_.index, pd.DatetimeIndex)
+            if not isinstance(history_.index, pd.DatetimeIndex):
+                msg = f"The index of the history of '{key}' is not a DatetimeIndex."
+                raise ValueError(msg)
 
             history_.rename_axis("timestamp", inplace=True)
             if history_.index.tz is None:
@@ -99,8 +109,7 @@ class ObservationStore:
             self._db[key] = history_
 
     def store_observation(self, key: str, value: FMUInputType, ts: DateTimeLike) -> None:
-        if ts.tzinfo is None:
-            ts = ts.replace(tzinfo=ZoneInfo("UTC"))
+        ts = ensure_tz(ts)
         if key not in self._db:
             self._db[key] = pd.Series(name=key, index=[ts], data=[value]).rename_axis("timestamp")
         self._db[key][ts] = value
@@ -112,14 +121,20 @@ class ObservationStore:
     def get_observations(
         self,
         key: str,
-        start: Optional[DateTimeLike] = None,
-        end: Optional[DateTimeLike] = None,
-        limit: Optional[int] = None,
+        start: DateTimeLike | None = None,
+        end: DateTimeLike | None = None,
+        limit: int | None = None,
     ) -> Series:
+        start = ensure_tz(start) if start is not None else None
+        end = ensure_tz(end) if end is not None else None
+
         obs = self._db[key].loc[start:end]
         if limit is not None:
             obs = obs.tail(limit)
         return obs
+
+    def to_dataframe(self) -> pd.DataFrame:
+        return pd.DataFrame(self._db)
 
 
 class ScheduleStore:
@@ -131,8 +146,8 @@ class ScheduleStore:
             if schedule.timestamp.dt.tz is None:
                 schedule.timestamp = schedule.timestamp.dt.tz_localize(ZoneInfo("UTC"))
 
-            if schedule.made_at.dt.tz is None:
-                schedule.made_at = schedule.made_at.dt.tz_localize(ZoneInfo("UTC"))
+            if schedule.cutoff_date.dt.tz is None:
+                schedule.cutoff_date = schedule.cutoff_date.dt.tz_localize(ZoneInfo("UTC"))
 
             self._db[key] = schedule
 
@@ -143,33 +158,34 @@ class ScheduleStore:
         return store
 
     @staticmethod
-    def _create_schedule_df(schedule: DataFrame, made_at: DateTimeLike) -> DataFrame:
-        if made_at.tzinfo is None:
-            made_at = made_at.replace(tzinfo=ZoneInfo("UTC"))
+    def _create_schedule_df(schedule: DataFrame, cutoff_date: DateTimeLike) -> DataFrame:
+        cutoff_date = ensure_tz(cutoff_date)
 
-        schedule = schedule.copy().rename_axis("timestamp").reset_index().assign(made_at=made_at)
+        schedule = schedule.copy().rename_axis("timestamp").reset_index().assign(cutoff_date=cutoff_date)
         if schedule.timestamp.dt.tz is None:
             schedule.timestamp = schedule.timestamp.dt.tz_localize(ZoneInfo("UTC"))
         return schedule
 
-    def store_schedule(self, key: str, schedule: DataFrame, made_at: DateTimeLike) -> None:
-        schedule = self._create_schedule_df(schedule, made_at)
-
+    def store_schedule(self, key: str, schedule: DataFrame, cutoff_date: DateTimeLike) -> None:
+        schedule = self._create_schedule_df(schedule, cutoff_date)
         if key not in self._db:
             self._db[key] = schedule
 
         self._db[key] = pd.concat([self._db[key], schedule])
 
-    def store_schedules(self, made_at: DateTimeLike, **schedules: DataFrame) -> None:
+    def store_schedules(self, cutoff_date: DateTimeLike, **schedules: DataFrame) -> None:
         for key, schedule in schedules.items():
-            self.store_schedule(key, schedule, made_at)
+            self.store_schedule(key, schedule, cutoff_date)
 
     def get_schedule(
         self,
         key: str,
-        made_after: Optional[DateTimeLike] = None,
-        made_before: Optional[DateTimeLike] = None,
+        made_after: DateTimeLike | None = None,
+        made_before: DateTimeLike | None = None,
     ) -> DataFrame:
+        made_after = ensure_tz(made_after) if made_after is not None else None
+        made_before = ensure_tz(made_before) if made_before is not None else None
+
         if made_after is None and made_before is None:
             return self._db[key]
 
@@ -181,6 +197,9 @@ class ScheduleStore:
             mask = (self._db[key].index >= made_after) & (self._db[key].index <= made_before)
         return self._db[key].loc[mask]
 
-    def get_last_schedule(self, key: str, made_at: DateTimeLike) -> FMUInputType:
-        last_made_at = (self._db[key]["made_at"].unique() <= made_at).max()
-        return self._db[key].loc["made_at" == last_made_at, key]
+    def get_last_schedule(self, key: str, cutoff_date: DateTimeLike) -> DataFrame:
+        cutoff_date = ensure_tz(cutoff_date)
+        cutoff_dates = self._db[key]["cutoff_date"].unique()
+        last_cutoff_time = cutoff_dates[cutoff_dates <= cutoff_date].max()
+        schedule = self.get_schedule(key)
+        return schedule.loc[schedule.cutoff_date == last_cutoff_time].set_index("timestamp")

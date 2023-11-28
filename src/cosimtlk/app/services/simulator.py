@@ -1,6 +1,6 @@
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 from uuid import uuid4
 from zoneinfo import ZoneInfo
 
@@ -23,7 +23,7 @@ class SimulatorService:
         self,
         path: Path,
         *,
-        start_values: Optional[dict[str, FMUInputType]] = None,
+        start_values: dict[str, FMUInputType] | None = None,
         start_time: int = 0,
         step_size: int = 1,
     ) -> Record:
@@ -46,16 +46,16 @@ class SimulatorService:
         }
         return self.get(_id)
 
-    def list(self) -> list[Record]:
+    def list(self) -> list[Record]:  # noqa: A003
         return [self.get(_id) for _id, simulator_record in self._db.items()]
 
-    def get(self, id: str) -> Record:
+    def get(self, id: str) -> Record:  # noqa: A002
         return self._db[id]
 
-    def get_simulator(self, id: str) -> FMIWrapper:
+    def get_simulator(self, id: str) -> FMIWrapper:  # noqa: A002
         return self._db[id]["simulator"]
 
-    def delete(self, id: str) -> None:
+    def delete(self, id: str) -> None:  # noqa: A002
         del self._db[id]
 
 

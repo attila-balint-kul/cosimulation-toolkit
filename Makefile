@@ -9,46 +9,57 @@ PROJECT_NAME = cosimulation-toolkit
 PACKAGE_NAME = cosimtlk
 PACKAGE_VERSION := $(shell hatch version)
 DOCKER_REPOSITORY = attilabalint/$(PACKAGE_NAME)
+PYTHON_INTERPRETER = python3
 
 
 #################################################################################
 # COMMANDS                                                                      #
 #################################################################################
 
-## Install project dependencies
-install:
-	pip install -U pip
-	pip install -e ."[test,dev]"
-	mypy --install-types
+## Create python virtual environment
+venv/bin/python:
+	( \
+		$(PYTHON_INTERPRETER) -m venv $(PROJECT_DIR)/venv; \
+		source $(PROJECT_DIR)/venv/bin/activate; \
+		pip install --upgrade pip; \
+	)
 
-## Delete all compiled Python files
-clean:
-	find . -type f -name "*.py[co]" -delete
-	find . -type d -name "__pycache__" -delete
+## Initialize git repository
+.git:
+	@echo "Initializing git..."
+	git init
+	git add .
+	git commit -m "Initial commit"
+
+## Install project dependencies
+install: venv/bin/python
+	( \
+		source $(PROJECT_DIR)/venv/bin/activate; \
+		pip install -e .; \
+    )
+
+## Initialize project setup
+setup: install .git
+
+## Lint using ruff, mypy, black, and isort
+lint:
+	hatch run lint:all
 
 ## Format using black
 format:
-	ruff cosimtlk tests --fix
-	black cosimtlk tests
-	isort cosimtlk tests
-
-## Lint using ruff, mypy, black, and isort
-lint: format
-	mypy cosimtlk --check-untyped-defs
-	ruff cosimtlk tests
-	black cosimtlk tests --check
-	isort cosimtlk tests --check-only
+	hatch run lint:fmt
 
 ## Run pytest with coverage
-tests:
-	pytest --cov=cosimtlk tests/
+test:
+	hatch run cov
+
 
 #################################################################################
 # PROJECT RULES                                                                 #
 #################################################################################
 
 ## Build source distribution and wheel
-build: lint tests
+build: lint test
 	hatch build
 
 ## Upload source distribution and wheel to PyPI

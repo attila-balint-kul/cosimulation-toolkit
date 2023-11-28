@@ -38,7 +38,7 @@ def create_simulator(
 
 
 @router.get("/{id}", response_model=SimulatorModel)
-def get_simulator(id: str):
+def get_simulator(id: str):  # noqa: A002
     try:
         return simulator_service.get(id)
     except KeyError:
@@ -46,7 +46,7 @@ def get_simulator(id: str):
 
 
 @router.delete("/{id}")
-def delete_simulator(id: str):
+def delete_simulator(id: str):  # noqa: A002
     try:
         simulator_service.delete(id)
         return Response(status_code=204)
@@ -55,7 +55,7 @@ def delete_simulator(id: str):
 
 
 @router.get("/{id}/outputs")
-def read_outputs(id: str):
+def read_outputs(id: str):  # noqa: A002
     try:
         simulator = simulator_service.get_simulator(id)
         outputs = simulator.read_outputs()
@@ -65,10 +65,7 @@ def read_outputs(id: str):
 
 
 @router.post("/{id}/step")
-def step(
-    id: str,
-    input_values: dict[str, FMUInputType] = Body({}),
-):
+def step(id: str, input_values: dict[str, FMUInputType] = Body({})):  # noqa: A002, B008
     try:
         simulator = simulator_service.get_simulator(id)
         result = simulator.step(input_values=input_values)
@@ -79,7 +76,7 @@ def step(
 
 
 @router.post("/{id}/advance")
-def advance(id: str, until: int, input_values: dict[str, FMUInputType] = Body({})):
+def advance(id: str, until: int, input_values: dict[str, FMUInputType] = Body({})):  # noqa: A002, B008
     try:
         simulator = simulator_service.get_simulator(id)
         result = simulator.advance(until, input_values=input_values)
@@ -90,7 +87,7 @@ def advance(id: str, until: int, input_values: dict[str, FMUInputType] = Body({}
 
 
 @router.put("/{id}/parameters")
-def change_parameters(id: str, parameters: dict[str, FMUInputType] = Body({})):
+def change_parameters(id: str, parameters: dict[str, FMUInputType] = Body({})):  # noqa: A002, B008
     try:
         simulator = simulator_service.get_simulator(id)
         simulator.change_parameters(parameters)
@@ -101,15 +98,10 @@ def change_parameters(id: str, parameters: dict[str, FMUInputType] = Body({})):
 
 
 @router.post("/{id}/reset")
-def reset(
-    id: str,
-    data: SimulatorCreateModel,
-):
+def reset(id: str, data: SimulatorCreateModel):  # noqa: A002
     try:
         simulator = simulator_service.get_simulator(id)
-        simulator.reset(
-            start_values=data.start_values, start_time=data.start_time, step_size=data.step_size
-        )
+        simulator.reset(start_values=data.start_values, start_time=data.start_time, step_size=data.step_size)
     except Exception as e:
         logger.exception(e)
         return JSONResponse(status_code=500, content={"error": str(e)})

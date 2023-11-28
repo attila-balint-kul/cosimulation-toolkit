@@ -47,10 +47,14 @@ def test_context_manager(wrapper):
 
 
 def test_step(wrapper):
+    k = 2.0
+    dt = 1.0
+    y = 1.0
+
     with wrapper(
         start_values={
-            "integrator.k": 2.0,
-            "integrator.y_start": 1.05,
+            "integrator.k": k,
+            "integrator.y_start": y,
         }
     ) as fmu:
         # First step
@@ -63,7 +67,7 @@ def test_step(wrapper):
         )
         expected_output = {
             "current_time": 1,
-            "real_output": 5.05,
+            "real_output": y + k * dt * 2.0,
             "int_output": 3,
             "bool_output": False,
         }
@@ -72,14 +76,30 @@ def test_step(wrapper):
         # Second step
         outputs = fmu.step(
             input_values={
-                "real_setpoint": 1.0,
+                "real_setpoint": 1.5,
                 "int_setpoint": 2,
-                "bool_setpoint": True,
+                "bool_setpoint": False,
             }
         )
         expected_output = {
             "current_time": 2,
-            "real_output": 7.05,
+            "real_output": y + k * dt * 2.0 + k * dt * 1.5,
+            "int_output": 2,
+            "bool_output": False,
+        }
+        assert outputs == expected_output
+
+        # Third step
+        outputs = fmu.step(
+            input_values={
+                "real_setpoint": 3.0,
+                "int_setpoint": 2,
+                "bool_setpoint": True,  # Resets the integrator
+            }
+        )
+        expected_output = {
+            "current_time": 3,
+            "real_output": y + k * dt * 3.0,
             "int_output": 2,
             "bool_output": True,
         }
@@ -220,7 +240,6 @@ def test_change_parameters(wrapper):
             "bool_output": True,
         }
         assert outputs == expected_output
-        print(outputs)
 
         outputs = fmu.step(
             input_values={
@@ -236,7 +255,6 @@ def test_change_parameters(wrapper):
             "bool_output": False,
         }
         assert outputs == expected_output
-        print(outputs)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Optional, Union
+from typing import Any
 from zoneinfo import ZoneInfo
 
 import simpy as sp
@@ -8,9 +8,16 @@ from simpy.core import EmptySchedule, SimTime, StopSimulation
 from simpy.events import URGENT
 from tqdm import tqdm
 
+from cosimtlk.simulation.storage import ObservationStore, ScheduleStore, StateStore
+from cosimtlk.simulation.utils import UTC
+
 
 class Environment(sp.Environment):
-    def __init__(self, initial_time: int = 0, tzinfo: ZoneInfo = ZoneInfo("UTC")):
+    def __init__(
+        self,
+        initial_time: int = 0,
+        tzinfo: ZoneInfo = UTC,
+    ):
         """Execution environment for an event-based simulation. The passing of time
         is simulated by stepping from event to event.
 
@@ -24,7 +31,10 @@ class Environment(sp.Environment):
             initial_time: The initial time of the simulation as a unix timestamp.
             tzinfo: The timezone of the simulation.
         """
-        super().__init__(initial_time=initial_time)
+        super().__init__(initial_time=int(initial_time))
+        self.state = StateStore()
+        self.db = ObservationStore()
+        self.schedules = ScheduleStore()
         self.tzinfo = tzinfo
 
     @property
@@ -33,30 +43,29 @@ class Environment(sp.Environment):
 
         This property is not used in this subclass and is made internal. Use simulation_timestamp instead.
         """
-        raise AttributeError(
-            "Now is used internally, use simulation_time instead to access the current time."
-        )
+        msg = "Now is used internally, use simulation_time instead to access the current time."
+        raise AttributeError(msg)
 
     @property
-    def simulation_timestamp(self) -> int:
+    def current_timestamp(self) -> int:
         """The current simulation time as a unix timestamp."""
         return int(self._now)
 
     @property
-    def simulation_datetime(self) -> datetime:
+    def current_datetime(self) -> datetime:
         """The current simulation time as a timezone aware datetime object."""
         return datetime.fromtimestamp(int(self._now), tz=self.tzinfo)
 
     def run(
         self,
-        until: Union[SimTime, Event, None] = None,
-        progress_bar: bool = True,
-    ) -> Optional[Any]:
+        until: SimTime | Event | None = None,
+        show_progress_bar: bool = True,  # noqa
+    ) -> Any | None:
         """Run the environment until the given event or time.
 
         Args:
             until: The event or time until which the environment should be run.
-            progress_bar: Whether to show a progress bar.
+            show_progress_bar: Whether to show a progress bar.
 
         Returns:
             The value of the event if it was triggered, otherwise None.
@@ -72,7 +81,8 @@ class Environment(sp.Environment):
                     at = float(until)
 
                 if at <= self._now:
-                    raise ValueError(f"until(={at}) must be > the current simulation time.")
+                    msg = f"until(={at}) must be > the current simulation time."
+                    raise ValueError(msg)
 
                 # Schedule the event before all regular timeouts.
                 until = Event(self)
@@ -87,22 +97,26 @@ class Environment(sp.Environment):
             until.callbacks.append(StopSimulation.callback)
 
         try:
-            if progress_bar:
-                pbar = tqdm(total=at - self._now, desc="Simulation progress", unit="s")
+            if show_progress_bar:
+                total = at - self._now
+                pbar = tqdm(total=total, desc="Simulation progress", unit="s")
                 while True:
-                    now = self._now
+                    now = int(self._now)
                     self.step()
-                    progress = self._now - now
-                    pbar.update(progress)
+                    progress = int(self._now) - now
+                    if progress > 0:
+                        pbar.update(progress)
             else:
                 while True:
                     self.step()
         except StopSimulation as exc:
+            if show_progress_bar:
+                pbar.update(total - pbar.n)
+                pbar.close()
             return exc.args[0]  # == until.value
         except EmptySchedule as e:
             if until is not None:
-                assert not until.triggered
-                raise RuntimeError(
-                    f'No scheduled events left but "until" event was not ' f"triggered: {until}"
-                ) from e
+                assert not until.triggered  # noqa: S101
+                msg = f'No scheduled events left but "until" event was not triggered: {until}'
+                raise RuntimeError(msg) from e
         return None

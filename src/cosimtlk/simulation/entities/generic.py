@@ -1,5 +1,5 @@
 import functools
-from typing import Callable, Generator
+from collections.abc import Callable, Generator
 
 from cosimtlk.simulation.entities import Entity
 

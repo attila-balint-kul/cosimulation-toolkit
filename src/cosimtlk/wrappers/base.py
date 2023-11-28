@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from typing import Any, Optional, Union
+from typing import Any
 
 from cosimtlk.models import FMUInputType
 
@@ -19,9 +19,9 @@ class Wrapper(metaclass=ABCMeta):
     def initialize(
         self,
         *,
-        start_values: Optional[dict[str, FMUInputType]] = None,
-        start_time: Union[int, float] = 0,
-        step_size: Union[int, float] = 1,
+        start_values: dict[str, FMUInputType] | None = None,
+        start_time: int | float = 0,
+        step_size: int | float = 1,
     ) -> None:
         raise NotImplementedError
 
@@ -29,9 +29,9 @@ class Wrapper(metaclass=ABCMeta):
     def reset(
         self,
         *,
-        start_values: Optional[dict[str, FMUInputType]] = None,
-        start_time: Union[int, float] = 0,
-        step_size: Union[int, float] = 1,
+        start_values: dict[str, FMUInputType] | None = None,
+        start_time: int | float = 0,
+        step_size: int | float = 1,
     ) -> None:
         raise NotImplementedError
 
@@ -43,7 +43,7 @@ class Wrapper(metaclass=ABCMeta):
     def step(
         self,
         *,
-        input_values: Optional[dict[str, FMUInputType]] = None,
+        input_values: dict[str, FMUInputType] | None = None,
     ) -> dict[str, FMUInputType]:
         raise NotImplementedError
 
@@ -52,7 +52,7 @@ class Wrapper(metaclass=ABCMeta):
         self,
         until: int,
         *,
-        input_values: Optional[dict[str, FMUInputType]] = None,
+        input_values: dict[str, FMUInputType] | None = None,
     ) -> dict[str, FMUInputType]:
         raise NotImplementedError
 

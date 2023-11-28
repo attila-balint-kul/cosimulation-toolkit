@@ -1,7 +1,7 @@
 import logging
 import shutil
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any
 from uuid import uuid4
 
 import fmpy
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 class FMIWrapper(Wrapper):
     def __init__(
         self,
-        path: Union[Path, str],
+        path: Path | str,
     ):
         """Simulator using an FMU.
 
@@ -27,9 +27,11 @@ class FMIWrapper(Wrapper):
         # Path to the FMU file
         fmu_path = Path(path).resolve()
         if not fmu_path.exists():
-            raise FileNotFoundError(f"FMU file not found: {fmu_path}")
+            msg = f"FMU file not found: {fmu_path}"
+            raise FileNotFoundError(msg)
         if not fmu_path.suffix == ".fmu":
-            raise ValueError(f"FMU file must have .fmu extension: {fmu_path}")
+            msg = f"FMU file must have .fmu extension: {fmu_path}"
+            raise ValueError(msg)
         self.fmu_path = str(fmu_path)
 
         # Read model description from the FMU
@@ -66,16 +68,13 @@ class FMIWrapper(Wrapper):
             "String": [],
         }
         for variable in self.model_description.modelVariables:
-            if (
-                variable.causality == FMUCausaltyType.OUTPUT
-                and variable.name in self._output_variables
-            ):
+            if variable.causality == FMUCausaltyType.OUTPUT and variable.name in self._output_variables:
                 self._output_names[variable.type].append(variable.name)
                 self._output_refs[variable.type].append(variable.valueReference)
 
         self._instantiated = False
         self._initialized = False
-        self.fmu: Optional[FMU2Slave] = None
+        self.fmu: FMU2Slave | None = None
         self._current_time = 0
         self._step_size = 1
 
@@ -98,9 +97,9 @@ class FMIWrapper(Wrapper):
     def __call__(
         self,
         *,
-        start_values: Optional[dict[str, FMUInputType]] = None,
-        start_time: Union[int, float] = 0,
-        step_size: Union[int, float] = 1,
+        start_values: dict[str, FMUInputType] | None = None,
+        start_time: int | float = 0,
+        step_size: int | float = 1,
     ):
         self.initialize(start_values=start_values, start_time=start_time, step_size=step_size)
         return self
@@ -128,7 +127,7 @@ class FMIWrapper(Wrapper):
         return self._step_size
 
     @property
-    def current_time(self) -> Union[int, float]:
+    def current_time(self) -> int | float:
         return self._current_time
 
     @property
@@ -153,17 +152,17 @@ class FMIWrapper(Wrapper):
     def initialize(
         self,
         *,
-        start_values: Optional[dict[str, FMUInputType]] = None,
-        start_time: Union[int, float] = 0,
-        step_size: Union[int, float] = 1,
+        start_values: dict[str, FMUInputType] | None = None,
+        start_time: int | float = 0,
+        step_size: int | float = 1,
     ) -> None:
         """Initialize the FMU.
 
         In this state, equations are active to determine all outputs (and optionally other variables
         exposed by the exporting tool). The variables that can be retrieved by fmi2GetXXX calls are
         (1) defined in the xml file under <ModelStructure><InitialUnknowns>, and
-        (2) variables with causality = ′′output′′. Variables with initial = ′′exact′′ and
-        variability ≠ "constant", as well as variables with causality = ′′input′′ can be set.
+        (2) variables with causality = 'output'. Variables with initial = 'exact' and
+        variability ≠ "constant", as well as variables with causality = 'input' can be set.
         """
         if not self._instantiated:
             self._instantiate()
@@ -176,9 +175,7 @@ class FMIWrapper(Wrapper):
 
         start_values = start_values or {}
         self.fmu.enterInitializationMode()
-        fmpy.simulation.apply_start_values(
-            self.fmu, self.model_description, start_values=start_values or {}
-        )
+        fmpy.simulation.apply_start_values(self.fmu, self.model_description, start_values=start_values or {})
         self.fmu.exitInitializationMode()
         self._initialized = True
 
@@ -196,9 +193,9 @@ class FMIWrapper(Wrapper):
     def reset(
         self,
         *,
-        start_values: Optional[dict[str, FMUInputType]] = None,
-        start_time: Union[int, float] = 0,
-        step_size: Union[int, float] = 1,
+        start_values: dict[str, FMUInputType] | None = None,
+        start_time: int | float = 0,
+        step_size: int | float = 1,
     ) -> None:
         self._check_is_initialized()
         self.close()
@@ -206,23 +203,21 @@ class FMIWrapper(Wrapper):
 
     def _check_is_initialized(self):
         if not self._initialized:
-            raise RuntimeError("FMU is not initialized.")
+            msg = "FMU is not initialized."
+            raise RuntimeError(msg)
 
-    def step(
-        self, *, input_values: Optional[dict[str, FMUInputType]] = None
-    ) -> dict[str, FMUInputType]:
+    def step(self, *, input_values: dict[str, FMUInputType] | None = None) -> dict[str, FMUInputType]:
         self._check_is_initialized()
         self._set_inputs(input_values or {})
         self._do_step()
         outputs = self.read_outputs()
         return outputs
 
-    def advance(
-        self, until: int, *, input_values: Optional[dict[str, FMUInputType]] = None
-    ) -> dict[str, FMUInputType]:
+    def advance(self, until: int, *, input_values: dict[str, FMUInputType] | None = None) -> dict[str, FMUInputType]:
         self._check_is_initialized()
         if until < self._current_time:
-            raise ValueError("Cannot advance time to a time in the past.")
+            msg = "Cannot advance time to a time in the past."
+            raise ValueError(msg)
 
         self._set_inputs(input_values or {})
 
@@ -259,12 +254,11 @@ class FMIWrapper(Wrapper):
         elif variable_type == "Enumeration":
             self.fmu.setInteger([variable_reference], [int(value)])
         else:
-            raise ValueError(
-                f"Unknown variable type '{variable_type}' for variable '{variable.name}'."
-            )
+            msg = f"Unknown variable type '{variable_type}' for variable '{variable.name}'."
+            raise ValueError(msg)
 
     def read_outputs(self) -> dict[str, FMUInputType]:
-        assert self.fmu is not None
+        self._check_is_initialized()
 
         outputs = {
             "current_time": self._current_time,
@@ -282,9 +276,7 @@ class FMIWrapper(Wrapper):
             outputs.update(
                 {
                     output_name: bool(output_val)
-                    for output_name, output_val in zip(
-                        self._output_names["Boolean"], boolean_outputs, strict=True
-                    )
+                    for output_name, output_val in zip(self._output_names["Boolean"], boolean_outputs, strict=True)
                 }
             )
 
@@ -293,9 +285,7 @@ class FMIWrapper(Wrapper):
             outputs.update(
                 {
                     output_name: str(output_val)
-                    for output_name, output_val in zip(
-                        self._output_names["String"], string_outputs, strict=True
-                    )
+                    for output_name, output_val in zip(self._output_names["String"], string_outputs, strict=True)
                 }
             )
 
@@ -315,19 +305,15 @@ class FMIWrapper(Wrapper):
             return self.fmu.getString([variable_reference])[0]
         elif variable_type == "Enumeration":
             return self.fmu.getInteger([variable_reference])[0]
-        raise ValueError(
-            f"Unknown variable type '{variable_type}' for variable '{variable.name}'."
-        )
+        msg = f"Unknown variable type '{variable_type}' for variable '{variable.name}'."
+        raise ValueError(msg)
 
     def change_parameters(self, parameters: dict[str, FMUInputType]) -> None:
         start_values = {
-            variable.name: self._read_variable(variable)
-            for variable in self.model_description.modelVariables
+            variable.name: self._read_variable(variable) for variable in self.model_description.modelVariables
         }
         start_values.update(parameters)
-        self.reset(
-            start_values=start_values, start_time=self._current_time, step_size=self._step_size
-        )
+        self.reset(start_values=start_values, start_time=self._current_time, step_size=self._step_size)
 
     def _inputs(self) -> dict[str, dict[str, Any]]:
         return {
