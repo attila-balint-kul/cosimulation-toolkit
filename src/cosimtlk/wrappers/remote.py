@@ -48,7 +48,6 @@ class RemoteFMIWrapper(Wrapper):
         return self._id is not None
 
     def info(self) -> dict[str, Any]:
-        self._check_is_initialized()
         return self.client.get_fmu_info(self._fmu_path)
 
     def close(self):

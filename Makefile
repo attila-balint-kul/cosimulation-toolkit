@@ -79,7 +79,7 @@ push-image: image
 pull-image:
 	docker pull $(DOCKER_REPOSITORY):v$(PACKAGE_VERSION)
 
-container: image
+run-image: image
 	docker run -it -v ./fmus:/home/cosimtlk/fmus -p 8000:8000 --rm $(DOCKER_REPOSITORY):v$(PACKAGE_VERSION)
 
 
