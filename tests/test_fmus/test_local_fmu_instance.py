@@ -1,61 +1,69 @@
 import pytest
 
 
-def test_initialize(wrapper):
-    assert wrapper.is_initialized is False
-    assert wrapper.step_size == 1
-    assert wrapper.current_time == 0
+def test_initialize(local_fmu_instance):
+    assert local_fmu_instance.step_size == 1
+    assert local_fmu_instance.current_time == 0
 
-    wrapper.initialize()
-    assert wrapper.is_initialized is True
-    assert wrapper.step_size == 1
-    assert wrapper.current_time == 0
+    local_fmu_instance.close()
 
-    wrapper.close()
-    assert wrapper.is_initialized is False
-    assert wrapper.step_size == 1
-    assert wrapper.current_time == 0
+    assert local_fmu_instance.step_size == 1
+    assert local_fmu_instance.current_time == 0
 
 
-def test_step_on_closed_raises(wrapper):
+def test_step_on_closed_raises(local_fmu_instance):
+    local_fmu_instance.close()
     with pytest.raises(RuntimeError):
         """Cannot call step() on a uninitialized fmu."""
-        wrapper.step()
+        local_fmu_instance.step()
 
 
-def test_advance_on_closed_raises(wrapper):
+def test_advance_on_closed_raises(local_fmu_instance):
+    local_fmu_instance.close()
     with pytest.raises(RuntimeError):
         """Cannot call advance() on a uninitialized fmu."""
-        wrapper.advance(3)
+        local_fmu_instance.advance(3)
 
 
-def test_reset_on_closed_raises(wrapper):
-    with pytest.raises(RuntimeError):
-        """Cannot call advance() on a uninitialized fmu."""
-        wrapper.reset()
+def test_reset(local_fmu_instance):
+    local_fmu_instance.reset(start_time=2, step_size=2, start_values={})
+
+    assert local_fmu_instance.step_size == 2
+    assert local_fmu_instance.current_time == 2
 
 
-def test_context_manager(wrapper):
-    with wrapper() as fmu:
+def test_reset_multiple_times(local_fmu_instance):
+    local_fmu_instance.reset(start_time=1, step_size=1, start_values={})
+
+    local_fmu_instance.reset(start_time=2, step_size=2, start_values={})
+
+    assert local_fmu_instance.step_size == 2
+    assert local_fmu_instance.current_time == 2
+
+
+def test_context_manager(local_fmu_instance):
+    with local_fmu_instance as fmu:
         assert fmu.is_initialized is True
         assert fmu.step_size == 1
         assert fmu.current_time == 0
 
-    assert wrapper.is_initialized is False
-    assert wrapper.step_size == 1
-    assert wrapper.current_time == 0
+    assert local_fmu_instance.is_initialized is False
+    assert local_fmu_instance.step_size == 1
+    assert local_fmu_instance.current_time == 0
 
 
-def test_step(wrapper):
+def test_step(local_fmu):
     k = 2.0
     dt = 1.0
     y = 1.0
 
-    with wrapper(
+    with local_fmu.instantiate(
+        start_time=0,
+        step_size=1,
         start_values={
             "integrator.k": k,
             "integrator.y_start": y,
-        }
+        },
     ) as fmu:
         # First step
         outputs = fmu.step(
@@ -106,12 +114,14 @@ def test_step(wrapper):
         assert outputs == expected_output
 
 
-def test_advance(wrapper):
-    with wrapper(
+def test_advance(local_fmu):
+    with local_fmu.instantiate(
+        start_time=0,
+        step_size=1,
         start_values={
             "integrator.k": 1.0,
             "integrator.y_start": 1.05,
-        }
+        },
     ) as fmu:
         outputs = fmu.advance(
             10,
@@ -130,15 +140,17 @@ def test_advance(wrapper):
         assert outputs == expected_output
 
 
-def test_read_outputs(wrapper):
-    with wrapper(
+def test_read_outputs(local_fmu):
+    with local_fmu.instantiate(
+        start_time=0,
+        step_size=1,
         start_values={
             "integrator.k": 2.0,
             "integrator.y_start": 1.05,
             "real_setpoint": 2.0,
             "int_setpoint": 3,
             "bool_setpoint": True,
-        }
+        },
     ) as fmu:
         outputs = fmu.read_outputs()
         expected_output = {
@@ -150,8 +162,8 @@ def test_read_outputs(wrapper):
         assert outputs == expected_output
 
 
-def test_step_with_custom_stepsize(wrapper):
-    with wrapper(
+def test_step_with_custom_stepsize(local_fmu):
+    with local_fmu.instantiate(
         start_values={
             "integrator.k": 2.0,
             "integrator.y_start": 1.05,
@@ -176,13 +188,14 @@ def test_step_with_custom_stepsize(wrapper):
         assert outputs == expected_output
 
 
-def test_advance_with_custom_stepsize(wrapper):
-    with wrapper(
+def test_advance_with_custom_stepsize(local_fmu):
+    with local_fmu.instantiate(
         start_values={
             "integrator.k": 2.0,
             "integrator.y_start": 1.05,
         },
         step_size=5,
+        start_time=0,
     ) as fmu:
         # First step
         outputs = fmu.advance(
@@ -202,12 +215,14 @@ def test_advance_with_custom_stepsize(wrapper):
         assert outputs == expected_output
 
 
-def test_change_parameters(wrapper):
-    with wrapper(
+def test_change_parameters(local_fmu):
+    with local_fmu.instantiate(
         start_values={
             "integrator.k": 2.0,
             "integrator.y_start": 1.05,
-        }
+        },
+        start_time=0,
+        step_size=1,
     ) as fmu:
         outputs = fmu.step(
             input_values={

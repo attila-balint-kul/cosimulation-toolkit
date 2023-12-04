@@ -2,11 +2,12 @@ import logging
 from pathlib import Path
 from typing import Annotated
 
+import attrs
 from fastapi import APIRouter, Depends
 from starlette.responses import Response
 
+from cosimtlk._fmu import FMU
 from cosimtlk.app.dependencies import get_fmu_dir
-from cosimtlk.wrappers.local import FMIWrapper
 
 logger = logging.getLogger(__name__)
 
@@ -26,4 +27,6 @@ def get_info(fmu: str, fmu_dir: Annotated[Path, Depends(get_fmu_dir)]):
     fmu_path = fmu_dir / f"{fmu}.fmu"
     if not fmu_path.exists():
         return Response(status_code=404)
-    return FMIWrapper(fmu_path).info()
+
+    model_description = FMU(fmu_path).model_description
+    return attrs.asdict(model_description)

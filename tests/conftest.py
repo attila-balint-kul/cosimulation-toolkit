@@ -5,14 +5,25 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from cosimtlk import FMU
 from cosimtlk.simulation.utils import UTC, ensure_tz
-from cosimtlk.wrappers import FMIWrapper
+
+
+@pytest.fixture(scope="session")
+def local_fmu():
+    fmu = FMU("tests/fixtures/fmus/ModSim.Examples.InputTest.fmu")
+    return fmu
 
 
 @pytest.fixture(scope="function")
-def wrapper():
-    path = "./fmus/ModSim.Examples.InputTest.fmu"
-    return FMIWrapper(path)
+def local_fmu_instance(local_fmu):
+    instance = local_fmu.instantiate(
+        start_time=0,
+        step_size=1,
+        start_values={},
+    )
+    yield instance
+    instance.close()
 
 
 def fake_data(

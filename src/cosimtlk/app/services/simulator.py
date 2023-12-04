@@ -4,7 +4,7 @@ from typing import Any
 from uuid import uuid4
 from zoneinfo import ZoneInfo
 
-from cosimtlk import FMIWrapper
+from cosimtlk import FMU
 from cosimtlk.models import FMUInputType
 
 Record = dict[str, Any]
@@ -30,8 +30,7 @@ class SimulatorService:
         if not path.exists():
             raise FileNotFoundError(path)
 
-        wrapper = FMIWrapper(path)
-        fmu = wrapper(
+        fmu = FMU(path).instantiate(
             start_values=start_values or {},
             start_time=start_time,
             step_size=step_size,
@@ -52,7 +51,7 @@ class SimulatorService:
     def get(self, id: str) -> Record:  # noqa: A002
         return self._db[id]
 
-    def get_simulator(self, id: str) -> FMIWrapper:  # noqa: A002
+    def get_simulator(self, id: str) -> FMU:  # noqa: A002
         return self._db[id]["simulator"]
 
     def delete(self, id: str) -> None:  # noqa: A002

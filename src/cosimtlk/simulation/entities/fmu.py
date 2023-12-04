@@ -5,7 +5,8 @@ from collections.abc import Callable, Generator
 
 from cosimtlk.models import FMUInputType
 from cosimtlk.simulation.entities import Entity
-from cosimtlk.wrappers import FMIWrapper
+from cosimtlk._fmu import FMUBase
+
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +16,7 @@ class FMUEntity(Entity):
         self,
         name: str,
         *,
-        simulator: FMIWrapper,
+        simulator: FMUBase,
         start_values: dict[str, FMUInputType],
         step_size: int,
         simulation_step_size: int,
@@ -25,7 +26,8 @@ class FMUEntity(Entity):
     ):
         super().__init__(name)
         # Simulator inputs
-        self.simulator = simulator
+        self.fmu = simulator
+        self.fmu_instance = None
         self.start_values = start_values
         self.step_size = step_size
         self.simulation_step_size = simulation_step_size
@@ -46,21 +48,21 @@ class FMUEntity(Entity):
         input_namespace = self.env.state.make_namespace(self.namespace, self.input_namespace)
         output_namespace = self.env.state.make_namespace(self.namespace, self.output_namespace)
 
-        self.simulator.initialize(
+        self.fmu_instance = self.fmu.instantiate(
             start_values=self.start_values,
             step_size=self.step_size,
             start_time=self.env.current_timestamp,
         )
-        self._store_outputs(self.simulator.read_outputs(), namespace=output_namespace)
+        self._store_outputs(self.fmu_instance.read_outputs(), namespace=output_namespace)
         while True:
             simulation_timestamp = self.env.current_timestamp
             # Collect inputs
             inputs = self.env.state.get_all(namespace=input_namespace)
             logger.debug(f"{self}: t={self.env.current_datetime}, inputs={inputs}")
             # Advance simulation
-            outputs = self.simulator.advance(simulation_timestamp + self.simulation_step_size, input_values=inputs)
+            outputs = self.fmu_instance.advance(simulation_timestamp + self.simulation_step_size, input_values=inputs)
             # Wait until next step
-            time_until_next_step = self.simulator.current_time - simulation_timestamp
+            time_until_next_step = self.fmu_instance.current_time - simulation_timestamp
             yield self.env.timeout(time_until_next_step)
             # Store outputs
             self._store_outputs(outputs, namespace=output_namespace)
