@@ -12,6 +12,6 @@ class SimulatorModel(BaseModel):
 
 
 class SimulatorCreateModel(BaseModel):
-    start_values: dict[str, FMUInputType] = {}
-    start_time: int = 0
-    step_size: int = 1
+    start_values: dict[str, FMUInputType]
+    start_time: int
+    step_size: int

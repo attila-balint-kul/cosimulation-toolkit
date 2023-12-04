@@ -18,7 +18,6 @@ logger = logging.getLogger(__name__)
 
 
 class FMUInstanceBase(metaclass=ABCMeta):
-
     def __enter__(self):
         return self
 
@@ -64,7 +63,7 @@ class FMUInstanceBase(metaclass=ABCMeta):
         start_time: int | float,
         step_size: int | float,
         start_values: dict[str, FMUInputType],
-    ) -> FMUInstanceBase:
+    ) -> dict[str, FMUInputType]:
         raise NotImplementedError
 
     @abstractmethod
@@ -81,6 +80,10 @@ class FMUInstanceBase(metaclass=ABCMeta):
 
     @abstractmethod
     def read_outputs(self) -> dict[str, FMUInputType]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def change_parameters(self, parameters: dict[str, FMUInputType]) -> FMUInstanceBase:
         raise NotImplementedError
 
 
@@ -104,8 +107,8 @@ class FMUInstance(FMUInstanceBase):
             modelIdentifier=self._fmu.model_description.coSimulation.modelIdentifier,
         )
         # Instantiate FMU
-        self._is_initialized = True
-        self._is_terminated = False
+        self._initialized = True
+        self._terminated = False
 
         self._instance.instantiate(visible=False, callbacks=None, loggingOn=False)
         self._initialize(start_values=start_values)
@@ -135,15 +138,15 @@ class FMUInstance(FMUInstanceBase):
         self._instance.enterInitializationMode()
         fmpy.simulation.apply_start_values(self._instance, self._fmu.model_description, start_values=start_values or {})
         self._instance.exitInitializationMode()
-        self._is_initialized = True
-        self._is_terminated = False
+        self._initialized = True
+        self._terminated = False
 
     def __repr__(self):
         return f"{self.__class__.__name__}(model_name={self._fmu.model_description.modelName})"
 
     @property
     def is_initialized(self) -> bool:
-        return self._is_initialized
+        return self._initialized
 
     @property
     def step_size(self) -> int | float:
@@ -156,10 +159,10 @@ class FMUInstance(FMUInstanceBase):
         return self._current_time
 
     def _terminate(self):
-        if not self._is_terminated:
+        if not self._terminated:
             self._instance.terminate()
             self._instance.reset()
-            self._is_terminated = True
+            self._terminated = True
 
     def close(self):
         """Closes the FMU."""
@@ -171,7 +174,7 @@ class FMUInstance(FMUInstanceBase):
                 logger.error("Could not free FMU instance.")
                 logger.exception(e)
             shutil.rmtree(self._unzipdir, ignore_errors=True)
-        self._is_initialized = False
+        self._initialized = False
 
     def reset(
         self,
@@ -383,6 +386,7 @@ class RemoteFMUInstance(FMUInstanceBase):
         if self._initialized:
             self._client.delete_simulator(self._id)
             self._id = None
+        self._initialized = False
 
     def reset(
         self,

@@ -67,13 +67,13 @@ class SimulatorClient:
         self,
         path: str,
         *,
-        start_values: dict[str, FMUInputType] | None = None,
+        start_values: dict[str, FMUInputType],
         start_time: int = 0,
         step_size: int = 1,
     ) -> SimulatorModel:
         params = {"fmu": path}
         body = {
-            "start_values": start_values or {},
+            "start_values": start_values,
             "start_time": start_time,
             "step_size": step_size,
         }

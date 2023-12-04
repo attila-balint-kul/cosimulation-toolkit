@@ -4,7 +4,7 @@ from typing import Any
 from uuid import uuid4
 from zoneinfo import ZoneInfo
 
-from cosimtlk import FMU
+from cosimtlk import FMU, FMUInstance
 from cosimtlk.models import FMUInputType
 
 Record = dict[str, Any]
@@ -23,7 +23,7 @@ class SimulatorService:
         self,
         path: Path,
         *,
-        start_values: dict[str, FMUInputType] | None = None,
+        start_values: dict[str, FMUInputType],
         start_time: int = 0,
         step_size: int = 1,
     ) -> Record:
@@ -31,7 +31,7 @@ class SimulatorService:
             raise FileNotFoundError(path)
 
         fmu = FMU(path).instantiate(
-            start_values=start_values or {},
+            start_values=start_values,
             start_time=start_time,
             step_size=step_size,
         )
@@ -51,7 +51,7 @@ class SimulatorService:
     def get(self, id: str) -> Record:  # noqa: A002
         return self._db[id]
 
-    def get_simulator(self, id: str) -> FMU:  # noqa: A002
+    def get_simulator(self, id: str) -> FMUInstance:  # noqa: A002
         return self._db[id]["simulator"]
 
     def delete(self, id: str) -> None:  # noqa: A002
