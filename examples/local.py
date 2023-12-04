@@ -1,6 +1,6 @@
 import logging
 
-from cosimtlk import RemoteFMU, SimulatorClient, FMU
+from cosimtlk import FMU
 
 logger = logging.getLogger(__name__)
 

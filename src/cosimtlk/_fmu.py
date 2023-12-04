@@ -363,7 +363,7 @@ class RemoteFMUInstance(FMUInstanceBase):
         return f"{self.__class__.__name__}(id={self._id}, model_name={self._fmu.model_description.modelName})"
 
     @property
-    def id(self) -> str:
+    def id(self) -> str:  # noqa: A003
         """Return the id of the FMU instance."""
         return self._id
 

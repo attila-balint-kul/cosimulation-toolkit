@@ -22,20 +22,34 @@ def main():
     logger.info(f"Created simulator: {simulator}")
     logger.info(f"Simulators: {client.list_simulators()}")
 
-    logger.info(
-        f"Step 1: {client.step(simulator_id, input_values={'int_setpoint': 1, 'real_setpoint': 3.14, 'bool_setpoint': True,})}"
-    )
-    logger.info(
-        f"Step 2: {client.step(simulator_id, input_values={'int_setpoint': 2, 'real_setpoint': 3.14, 'bool_setpoint': False,})}"
-    )
-    logger.info(
-        f"Step 3: {client.step(simulator_id, input_values={'int_setpoint': 3, 'real_setpoint': 3.14, 'bool_setpoint': True,})}"
-    )
-    logger.info(f"Reset {client.reset(simulator_id, start_values={'integrator.k': -3}, start_time=0, step_size=2)}")
-    logger.info(
-        f"Step 1: {client.step(simulator_id, input_values={'int_setpoint': 1, 'real_setpoint': 3.14, 'bool_setpoint': True,})}"
-    )
-    logger.info(f"Outputs: {client.get_outputs(simulator_id)}")
+    outputs = client.step(simulator_id, input_values={"int_setpoint": 2, "real_setpoint": 1.0, "bool_setpoint": False})
+    logger.info(outputs)
+
+    outputs = client.step(simulator_id, input_values={"int_setpoint": 2, "real_setpoint": 1.0, "bool_setpoint": False})
+    logger.info(outputs)
+
+    outputs = client.step(simulator_id, input_values={"int_setpoint": 2, "real_setpoint": 1.0, "bool_setpoint": False})
+    logger.info(outputs)
+
+    logger.info("Changing parameter to -2.0")
+    client.change_parameters(
+        simulator_id, parameters={"integrator.k": -2.0, "integrator.y_start": 3.0}
+    )  # carry over state
+
+    outputs = client.step(simulator_id, input_values={"int_setpoint": 2, "real_setpoint": 1.0, "bool_setpoint": False})
+    logger.info(outputs)
+
+    outputs = client.step(simulator_id, input_values={"int_setpoint": 2, "real_setpoint": 1.0, "bool_setpoint": False})
+    logger.info(outputs)
+
+    logger.info(client.advance(simulator_id, until=15))
+
+    outputs = client.step(simulator_id, input_values={"int_setpoint": 2, "real_setpoint": 1.0, "bool_setpoint": False})
+    logger.info(outputs)
+
+    outputs = client.step(simulator_id, input_values={"int_setpoint": 2, "real_setpoint": 1.0, "bool_setpoint": False})
+    logger.info(outputs)
+
     logger.info(client.delete_simulator(simulator_id))
 
 

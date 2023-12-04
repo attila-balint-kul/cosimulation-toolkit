@@ -3,10 +3,9 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable, Generator
 
+from cosimtlk._fmu import FMUBase
 from cosimtlk.models import FMUInputType
 from cosimtlk.simulation.entities import Entity
-from cosimtlk._fmu import FMUBase
-
 
 logger = logging.getLogger(__name__)
 
