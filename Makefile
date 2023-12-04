@@ -50,7 +50,7 @@ format:
 	hatch run lint:fmt
 
 ## Run pytest with coverage
-test:
+tests:
 	hatch run cov
 
 
@@ -71,7 +71,10 @@ publish-test: build
 	hatch publish --repo test
 
 image:
-	docker build --build-arg PYPI_VERSION=$(PACKAGE_VERSION) -t $(DOCKER_REPOSITORY):v$(PACKAGE_VERSION) .
+	docker build --build-arg PYPI_VERSION=$(PACKAGE_VERSION) -t $(DOCKER_REPOSITORY):v$(PACKAGE_VERSION) -f ./docker/Dockerfile .
+
+dev-image:
+	docker build --build-arg PYPI_VERSION=$(PACKAGE_VERSION) -t $(DOCKER_REPOSITORY):v$(PACKAGE_VERSION) -f ./docker/dev/Dockerfile .
 
 push-image: image
 	docker push $(DOCKER_REPOSITORY):v$(PACKAGE_VERSION)
@@ -82,6 +85,8 @@ pull-image:
 run-image: image
 	docker run -it -v ./fmus:/home/cosimtlk/fmus -p 8000:8000 --rm $(DOCKER_REPOSITORY):v$(PACKAGE_VERSION)
 
+run-dev-image: dev-image
+	docker run -it -v ./fmus:/home/cosimtlk/fmus -p 8000:8000 --rm $(DOCKER_REPOSITORY):v$(PACKAGE_VERSION)
 
 #################################################################################
 # Self Documenting Commands                                                     #
