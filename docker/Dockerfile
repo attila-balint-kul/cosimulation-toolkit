@@ -12,16 +12,7 @@ RUN pip install --no-cache-dir cosimtlk["server"]==${PYPI_VERSION}
 
 RUN useradd --create-home cosimtlk
 USER cosimtlk
+WORKDIR /home/cosimtlk
 
 EXPOSE 8000
 CMD ["cosimtlk", "server", "--host", "0.0.0.0", "--port", "8000"]
-
-#RUN useradd --create-home cosimtlk
-#USER cosimtlk
-#
-#RUN cp -r /opt/venv/lib/python3.10/site-packages/cosimtlk/app /home/cosimtlk/app
-#WORKDIR /home/cosimtlk
-#
-#EXPOSE 8000
-#
-#CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
