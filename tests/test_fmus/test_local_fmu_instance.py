@@ -2,12 +2,12 @@ import pytest
 
 
 def test_initialize(local_fmu_instance):
-    assert local_fmu_instance.step_size == 1
+    assert local_fmu_instance.fmu_step_size == 1
     assert local_fmu_instance.current_time == 0
 
     local_fmu_instance.close()
 
-    assert local_fmu_instance.step_size == 1
+    assert local_fmu_instance.fmu_step_size == 1
     assert local_fmu_instance.current_time == 0
 
 
@@ -28,7 +28,7 @@ def test_advance_on_closed_raises(local_fmu_instance):
 def test_reset(local_fmu_instance):
     local_fmu_instance.reset(start_time=2, step_size=2, start_values={})
 
-    assert local_fmu_instance.step_size == 2
+    assert local_fmu_instance.fmu_step_size == 2
     assert local_fmu_instance.current_time == 2
 
 
@@ -37,18 +37,18 @@ def test_reset_multiple_times(local_fmu_instance):
 
     local_fmu_instance.reset(start_time=2, step_size=2, start_values={})
 
-    assert local_fmu_instance.step_size == 2
+    assert local_fmu_instance.fmu_step_size == 2
     assert local_fmu_instance.current_time == 2
 
 
 def test_context_manager(local_fmu_instance):
     with local_fmu_instance as fmu:
         assert fmu.is_initialized is True
-        assert fmu.step_size == 1
+        assert fmu.fmu_step_size == 1
         assert fmu.current_time == 0
 
     assert local_fmu_instance.is_initialized is False
-    assert local_fmu_instance.step_size == 1
+    assert local_fmu_instance.fmu_step_size == 1
     assert local_fmu_instance.current_time == 0
 
 

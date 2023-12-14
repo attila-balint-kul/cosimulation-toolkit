@@ -1,4 +1,4 @@
 from cosimtlk.simulation.environment import Environment
-from cosimtlk.simulation.runner import SimulationRunner
+from cosimtlk.simulation.simulator import Simulator
 
-__all__ = ["Environment", "SimulationRunner"]
+__all__ = ["Environment", "Simulator"]

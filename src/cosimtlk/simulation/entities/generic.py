@@ -29,6 +29,4 @@ class GenericProcess(Entity):
     @property
     def processes(self) -> list[Callable[[], Generator]]:
         decorated = self.scheduler(self._func)
-        return [
-            functools.partial(decorated, self),
-        ]
+        return [functools.partial(decorated, self)]

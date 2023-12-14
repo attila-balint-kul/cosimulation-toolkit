@@ -5,7 +5,7 @@ from collections.abc import Callable, Generator
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from cosimtlk.simulation import Environment
+    from cosimtlk.simulation import Simulator
 
 
 class Entity(metaclass=ABCMeta):
@@ -23,7 +23,7 @@ class Entity(metaclass=ABCMeta):
             name: Name of the entity for identification purposes.
         """
         self._name = name
-        self._env: Environment | None = None
+        self._context: Simulator | None = None
 
     def __repr__(self):
         """Representation of the entity."""
@@ -35,18 +35,21 @@ class Entity(metaclass=ABCMeta):
         return self._name
 
     @property
-    def env(self) -> Environment:
+    def context(self) -> Simulator:
         """Simulation environment."""
-        return self._env
+        if self._context is None:
+            msg = "Entity has not been initialized yet."
+            raise RuntimeError(msg)
+        return self._context
 
-    def initialize(self, env: Environment) -> list[Callable[[], Generator]]:
+    def initialize(self, context: Simulator) -> Entity:
         """Initialize the entity in the simulation.
 
         Returns:
             List of processes that should be scheduled.
         """
-        self._env = env
-        return self.processes
+        self._context = context
+        return self
 
     @property
     @abstractmethod

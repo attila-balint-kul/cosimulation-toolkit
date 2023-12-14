@@ -11,7 +11,7 @@ from cosimtlk.simulation.storage import ObservationStore, ScheduleStore, StateSt
 from cosimtlk.simulation.utils import ensure_tz
 
 
-class SimulationRunner:
+class Simulator:
     def __init__(
         self,
         *,
@@ -32,31 +32,54 @@ class SimulationRunner:
         self.tzinfo: ZoneInfo = initial_time.tzinfo
 
         # Create simulation environment
-        self._environment = Environment(initial_time=initial_timestamp, tzinfo=self.tzinfo)
+        self._environment = Environment(initial_time=initial_timestamp)
 
-        # Initialize processes
+        # Initialize data stores
+        self._state = StateStore()
+        self._db = ObservationStore()
+        self._schedules = ScheduleStore()
+
+        # Initialize entities
+        self._initialize_entities(entities=entities)
+
+    def _initialize_entities(self, entities: list[Entity] | None = None) -> None:
         processes = []
         for entity in entities or []:
-            processes.extend(entity.initialize(self._environment))
+            entity.initialize(self)
+            processes.extend(entity.processes)
         process_delays = np.linspace(0.005, 0.995, len(processes))
 
         for process, delay in zip(processes, process_delays, strict=True):
             start_delayed(self._environment, process(), delay)
 
     def __repr__(self) -> str:
-        return f"<SimulationRunner t={self._environment.current_timestamp}>"
+        return f"<SimulationRunner t={self.current_timestamp}>"
+
+    @property
+    def current_timestamp(self) -> int:
+        """The current simulation time as a unix timestamp."""
+        return int(self._environment.now)
+
+    @property
+    def env(self) -> Environment:
+        return self._environment
+
+    @property
+    def current_datetime(self) -> datetime:
+        """The current simulation time as a timezone aware datetime object."""
+        return datetime.fromtimestamp(self.current_timestamp, tz=self.tzinfo)
 
     @property
     def state(self) -> StateStore:
-        return self._environment.state
+        return self._state
 
     @property
     def db(self) -> ObservationStore:
-        return self._environment.db
+        return self._db
 
     @property
     def schedules(self) -> ScheduleStore:
-        return self._environment.schedules
+        return self._schedules
 
     @staticmethod
     def _parse_datetime(dt: DateTimeLike) -> DateTimeLike:
@@ -100,4 +123,4 @@ class SimulationRunner:
             duration = self._td_to_duration(duration)
         else:
             duration = int(duration)
-        self.run(until=self._environment.current_timestamp + duration, show_progress_bar=show_progress_bar)
+        self.run(until=self.current_timestamp + duration, show_progress_bar=show_progress_bar)

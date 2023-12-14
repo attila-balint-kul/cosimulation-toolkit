@@ -32,17 +32,17 @@ class Input(Entity):
     def set_inputs_process(self):
         while True:
             if self.data.empty or self._index >= len(self.data):
-                logger.warning(f"{self}: t={self.env.current_datetime}, no data left.")
+                logger.warning(f"{self}: t={self.context.current_datetime}, no data left.")
                 break
 
-            current_time = self.env.current_datetime
+            current_time = self.context.current_datetime
             next_point_at = self.data.index[self._index]
 
             if next_point_at <= current_time:
                 next_points = self.data.iloc[self._index].to_dict()
-                logger.debug(f"{self}: t={self.env.current_datetime}, setting inputs: {next_points}")
-                self.env.state.set(**next_points)
+                logger.debug(f"{self}: t={self.context.current_datetime}, setting inputs: {next_points}")
+                self.context.state.set(**next_points)
                 self._index += 1
             else:
                 next_point_in = int((next_point_at - current_time).total_seconds())
-                yield self.env.timeout(next_point_in)
+                yield self.context.env.timeout(next_point_in)

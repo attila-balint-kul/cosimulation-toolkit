@@ -35,6 +35,6 @@ class StateObserver(Entity):
         ]
 
     def sensing_process(self):
-        values = {measurement: self.env.state.get(measurement) for measurement in self.measurements}
-        timestamp = self.env.current_datetime
-        self.env.db.store_observations(timestamp, **values)
+        values = {measurement: self.context.state.get(measurement) for measurement in self.measurements}
+        timestamp = self.context.current_datetime
+        self.context.db.store_observations(timestamp, **values)
