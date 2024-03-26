@@ -12,7 +12,7 @@ class SimulatorClient:
         self.session = requests.Session()
 
     def __repr__(self):
-        return f"SimulatorClient({self.base_url})"
+        return f"<SimulatorClient: {self.base_url}>"
 
     @classmethod
     def from_parts(cls, host: str = "127.0.0.1", port: int = 8000, *, secure: bool = False):

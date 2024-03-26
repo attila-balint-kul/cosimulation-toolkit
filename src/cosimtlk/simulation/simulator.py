@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
@@ -7,7 +8,6 @@ from simpy.util import start_delayed
 from cosimtlk.models import DateTimeLike
 from cosimtlk.simulation.entities import Entity
 from cosimtlk.simulation.environment import Environment
-from cosimtlk.simulation.storage import ObservationStore, ScheduleStore, StateStore
 from cosimtlk.simulation.utils import ensure_tz
 
 
@@ -17,6 +17,8 @@ class Simulator:
         *,
         initial_time: DateTimeLike,
         entities: list[Entity] | None = None,
+        logger: logging.Logger | None = None,
+        **kwargs,
     ) -> None:
         """Simulation runner.
 
@@ -34,26 +36,79 @@ class Simulator:
         # Create simulation environment
         self._environment = Environment(initial_time=initial_timestamp)
 
-        # Initialize data stores
-        self._state = StateStore()
-        self._db = ObservationStore()
-        self._schedules = ScheduleStore()
-
-        # Initialize entities
-        self._initialize_entities(entities=entities)
-
-    def _initialize_entities(self, entities: list[Entity] | None = None) -> None:
-        processes = []
+        # Add entities to the simulation
+        self._current_process = 0
+        self._process_delays = np.linspace(0.005, 0.995, 10000)
+        self._entities: dict[str, Entity] = {}
         for entity in entities or []:
-            entity.initialize(self)
-            processes.extend(entity.processes)
-        process_delays = np.linspace(0.005, 0.995, len(processes))
+            self.add_entity(entity)
 
-        for process, delay in zip(processes, process_delays, strict=True):
-            start_delayed(self._environment, process(), delay)
+        # Set up logger
+        self._logger = logger or logging.getLogger(__name__)
+
+        # Set additional attributes
+        for k, v in kwargs.items():
+            setattr(self, k, v)
 
     def __repr__(self) -> str:
-        return f"<SimulationRunner t={self.current_timestamp}>"
+        return f"<Simulator t={self.current_datetime} entities=[{self._entities.keys()}]>"
+
+    def add_entity(self, entity: Entity) -> "Simulator":
+        """Add an entity to the simulation.
+
+        Args:
+            entity: The entity to add to the simulation.
+
+        Returns:
+            The simulator object.
+        """
+        if entity.name in self._entities:
+            msg = f"Entity with name {entity.name} already exists."
+            raise ValueError(msg)
+        self._entities[entity.name] = entity
+
+        entity.initialize(self)
+        for process in entity.processes:
+            start_delayed(self._environment, process(), float(self._process_delays[self._current_process]))
+            self._current_process += 1
+        return self
+
+    @property
+    def entities(self) -> list[Entity]:
+        """The entities inside the simulation."""
+        return list(self._entities.values())
+
+    def get_entity(self, name: str) -> Entity:
+        """Get an entity by name.
+
+        Args:
+            name: The name of the entity to get.
+
+        Returns:
+            The entity with the given name.
+        """
+        return self._entities[name]
+
+    def remove_entity(self, name: str) -> None:
+        """Remove an entity from the simulation.
+
+        Args:
+            name: The name of the entity to remove.
+
+        Raises:
+            KeyError: If the entity does not exist.
+        """
+        del self._entities[name]
+
+    @property
+    def logger(self) -> logging.Logger:
+        """The logger for the simulation."""
+        return self._logger
+
+    @property
+    def env(self) -> Environment:
+        """The simulation environment."""
+        return self._environment
 
     @property
     def current_timestamp(self) -> int:
@@ -61,25 +116,9 @@ class Simulator:
         return int(self._environment.now)
 
     @property
-    def env(self) -> Environment:
-        return self._environment
-
-    @property
     def current_datetime(self) -> datetime:
         """The current simulation time as a timezone aware datetime object."""
         return datetime.fromtimestamp(self.current_timestamp, tz=self.tzinfo)
-
-    @property
-    def state(self) -> StateStore:
-        return self._state
-
-    @property
-    def db(self) -> ObservationStore:
-        return self._db
-
-    @property
-    def schedules(self) -> ScheduleStore:
-        return self._schedules
 
     @staticmethod
     def _parse_datetime(dt: DateTimeLike) -> DateTimeLike:

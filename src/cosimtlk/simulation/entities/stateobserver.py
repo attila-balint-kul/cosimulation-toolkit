@@ -2,8 +2,18 @@ from __future__ import annotations
 
 import functools
 from collections.abc import Callable, Generator
+from dataclasses import dataclass, field
 
 from cosimtlk.simulation.entities import Entity
+
+
+@dataclass(frozen=True, slots=True)
+class Measurement:
+    name: str
+    store_as: str | None = field(default=None)
+
+    def __post_init__(self):
+        object.__setattr__(self, "store_as", self.store_as or self.name)
 
 
 class StateObserver(Entity):
@@ -11,7 +21,7 @@ class StateObserver(Entity):
         self,
         name: str,
         *,
-        measurements: list[str],
+        measurements: list[Measurement],
         scheduler: Callable,
     ):
         """An entity that stores the current state of the simulation into long term storage.
@@ -35,6 +45,6 @@ class StateObserver(Entity):
         ]
 
     def sensing_process(self):
-        values = {measurement: self.context.state.get(measurement) for measurement in self.measurements}
-        timestamp = self.context.current_datetime
-        self.context.db.store_observations(timestamp, **values)
+        values = {measurement.store_as: self.ctx.state[measurement.name] for measurement in self.measurements}
+        self.log.debug(f"observed measurements={values}")
+        self.ctx.db.store_observations(self.ctx.current_datetime, **values)

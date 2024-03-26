@@ -13,7 +13,3 @@ class FMUCausaltyType(str, Enum):
     PARAMETER = "parameter"
     CALCULATED_PARAMETER = "calculatedParameter"
     LOCAL = "local"
-
-
-class FMUState(str, Enum):
-    STUFF = "stuff"

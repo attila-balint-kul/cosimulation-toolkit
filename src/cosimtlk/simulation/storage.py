@@ -1,4 +1,3 @@
-from typing import Any
 from zoneinfo import ZoneInfo
 
 import pandas as pd
@@ -6,84 +5,6 @@ from pandas import DataFrame, Series
 
 from cosimtlk.models import DateTimeLike, FMUInputType
 from cosimtlk.simulation.utils import ensure_tz
-
-
-class StateStore:
-    def __init__(self, namespace_separator: str = ":") -> None:
-        """A simple state store that allows to store and retrieve values by key and a namespace."""
-        if namespace_separator is None or namespace_separator == "":
-            msg = "The namespace separator cannot be None or an empty string."
-            raise ValueError(msg)
-
-        if len(namespace_separator) != 1:
-            msg = "The namespace separator must be a single character."
-            raise ValueError(msg)
-
-        self.namespace_separator = namespace_separator
-        self._state: dict[str, Any] = {}
-
-    def make_namespace(self, *args: str) -> str:
-        return self.namespace_separator.join(args)
-
-    def _slip_namespace(self, item: str) -> list[str]:
-        return item.split(self.namespace_separator)
-
-    def __getitem__(self, item: str) -> Any:
-        if self.namespace_separator in item:
-            current_dict = self._state
-            keys = self._slip_namespace(item)
-            for key in keys[:-1]:
-                current_dict = current_dict.get(key, {})
-            return current_dict.get(keys[-1])
-        return self._state[item]
-
-    def __setitem__(self, key: str, value: Any) -> None:
-        if self.namespace_separator in key:
-            current_dict = self._state
-            keys = self._slip_namespace(key)
-            for key in keys[:-1]:
-                current_dict = current_dict.setdefault(key, {})
-            current_dict[keys[-1]] = value
-        else:
-            self._state[key] = value
-
-    def __delitem__(self, key: str) -> None:
-        if self.namespace_separator in key:
-            current_dict = self._state
-            keys = self._slip_namespace(key)
-            for key in keys[:-1]:
-                current_dict = current_dict.get(key, {})
-            current_dict.pop(keys[-1], None)
-        else:
-            self._state.pop(key, None)
-
-    def get_all(self, *, namespace: str | None = None) -> dict[str, Any]:
-        if namespace is None:
-            return self._state
-        current_dict = self._state
-        keys = self._slip_namespace(namespace)
-        for key in keys:
-            current_dict = current_dict.get(key, {})
-        return current_dict
-
-    def get(self, key: str, namespace: str | None = None) -> Any:
-        if namespace is not None:
-            key = self.make_namespace(namespace, key)
-        return self.__getitem__(key)
-
-    def delete(self, *key: str, namespace: str | None = None) -> None:
-        if namespace is not None:
-            key = [f"{namespace}{self.namespace_separator}{k}" for k in key]
-        for k in key:
-            del self[k]
-
-    def set(self, namespace: str | None = None, **states: Any) -> None:  # noqa: A003
-        for key, value in states.items():
-            if namespace is not None:
-                namespaced_key = f"{namespace}{self.namespace_separator}{key}"
-            else:
-                namespaced_key = key
-            self[namespaced_key] = value
 
 
 class ObservationStore:
