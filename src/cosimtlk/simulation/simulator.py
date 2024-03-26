@@ -33,6 +33,9 @@ class Simulator:
         initial_timestamp = self._dt_to_timestamp(initial_time)
         self.tzinfo: ZoneInfo = initial_time.tzinfo
 
+        # Set up logger
+        self._logger = logger or logging.getLogger(__name__)
+
         # Create simulation environment
         self._environment = Environment(initial_time=initial_timestamp)
 
@@ -42,9 +45,6 @@ class Simulator:
         self._entities: dict[str, Entity] = {}
         for entity in entities or []:
             self.add_entity(entity)
-
-        # Set up logger
-        self._logger = logger or logging.getLogger(__name__)
 
         # Set additional attributes
         for k, v in kwargs.items():
