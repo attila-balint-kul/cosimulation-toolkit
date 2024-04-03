@@ -11,6 +11,7 @@ from cosimtlk import FMU
 from cosimtlk.simulation import Simulator
 from cosimtlk.simulation.entities import FMUEntity, GenericProcess, Input, Measurement, MultiInput, StateObserver
 from cosimtlk.simulation.state import SimulationState
+from cosimtlk.simulation.storage import ObservationStore
 from cosimtlk.simulation.utils import every
 
 logger = logging.getLogger(__name__)
@@ -133,6 +134,7 @@ def main():
     simulation = Simulator(
         initial_time=pd.Timestamp("2021-01-01T00:00:00Z"),
         state=State(),
+        db=ObservationStore(),
         entities=[
             *inputs,
             fmu_1_entity,

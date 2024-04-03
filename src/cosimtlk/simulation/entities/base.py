@@ -112,6 +112,11 @@ class Entity(metaclass=ABCMeta):
 
 
 class Source(Entity, metaclass=ABCMeta):
+
+    def __init__(self, name: str):
+        super().__init__(name)
+        self._build_count = 0
+
     @property
     def processes(self) -> list[Callable[[], Generator]]:
         return [self.generate]
@@ -124,6 +129,10 @@ class Source(Entity, metaclass=ABCMeta):
     def build_entity(self):
         raise NotImplementedError
 
+    @property
+    def build_count(self) -> int:
+        return self._build_count
+
     def _generate_interarrival_time(self):
         # if first_creation exists, emit it as the first time, else just use the interarrival_time
         while True:
@@ -134,5 +143,6 @@ class Source(Entity, metaclass=ABCMeta):
             timeout = self.wait_for(arrival_time)
             yield timeout
             entity = self.build_entity()
+            self._build_count += 1
             self.ctx.add_entity(entity)
             self.log.debug(f"created entity={entity} with attributes={entity.attributes}")

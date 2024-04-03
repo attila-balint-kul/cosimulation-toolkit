@@ -8,6 +8,7 @@ from simpy.util import start_delayed
 from cosimtlk.models import DateTimeLike
 from cosimtlk.simulation.entities import Entity
 from cosimtlk.simulation.environment import Environment
+from cosimtlk.simulation.state import SimulationState
 from cosimtlk.simulation.utils import ensure_tz
 
 
@@ -16,6 +17,7 @@ class Simulator:
         self,
         *,
         initial_time: DateTimeLike,
+        state: SimulationState,
         entities: list[Entity] | None = None,
         logger: logging.Logger | None = None,
         **kwargs,
@@ -38,6 +40,7 @@ class Simulator:
 
         # Create simulation environment
         self._environment = Environment(initial_time=initial_timestamp)
+        self._state = state
 
         # Add entities to the simulation
         self._current_process = 0
@@ -104,6 +107,11 @@ class Simulator:
     def logger(self) -> logging.Logger:
         """The logger for the simulation."""
         return self._logger
+
+    @property
+    def state(self) -> SimulationState:
+        """The state of the simulation."""
+        return self._state
 
     @property
     def env(self) -> Environment:
