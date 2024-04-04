@@ -6,7 +6,7 @@ from cosimtlk.simulation.entities import Entity
 
 
 class Input(Entity):
-    def __init__(self, name: str, *, values: Series):
+    def __init__(self, name: str, priority: int, *, values: Series):
         """An entity that sets the input of the simulator based on the input date.
 
         Args:
@@ -14,9 +14,8 @@ class Input(Entity):
             values: The input data as a Series with a DatetimeIndex.
                 The index of the values is used as the time at which the input is set
         """
-        super().__init__(name)
+        super().__init__(name, priority)
         self.values = values
-        self._state = values.name
         self._index = 0
 
     @property
@@ -34,8 +33,8 @@ class Input(Entity):
 
             if next_point_at <= current_time:
                 current_value = self.values.iloc[self._index]
-                self.log.debug(f"setting {self._state}={current_value}")
-                self.ctx.state[self._state] = current_value
+                self.log.debug(f"setting {self.values.name}={current_value}")
+                self.ctx.state[self.values.name] = current_value
                 self._index += 1
             else:
                 next_point_in = int((next_point_at - current_time).total_seconds())
@@ -43,15 +42,16 @@ class Input(Entity):
 
 
 class MultiInput(Entity):
-    def __init__(self, name: str, *, values: DataFrame):
+    def __init__(self, name: str, priority: int, *, values: DataFrame):
         """An entity that sets the input of the simulator based on the input date.
 
         Args:
             name: The name of the entity.
+            priority: The priority of the entity in the simulation.
             values: The input data as a Series with a DatetimeIndex.
                 The index of the values is used as the time at which the input is set
         """
-        super().__init__(name)
+        super().__init__(name, priority)
         self.values = values
         self._index = 0
 

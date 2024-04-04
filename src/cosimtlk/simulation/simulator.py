@@ -43,8 +43,7 @@ class Simulator:
         self._state = state
 
         # Add entities to the simulation
-        self._current_process = 0
-        self._process_delays = np.linspace(0.005, 0.995, 10000)
+        self._process_delays = np.arange(0.0005, 0.9995, 0.0005)
         self._entities: dict[str, Entity] = {}
         for entity in entities or []:
             self.add_entity(entity)
@@ -72,8 +71,7 @@ class Simulator:
 
         entity.initialize(self)
         for process in entity.processes:
-            start_delayed(self._environment, process(), float(self._process_delays[self._current_process]))
-            self._current_process += 1
+            start_delayed(self._environment, process(), float(self._process_delays[entity.priority]))
         return self
 
     @property

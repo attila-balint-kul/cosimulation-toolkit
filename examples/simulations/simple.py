@@ -46,36 +46,13 @@ class State(SimulationState):
 def main():
     fmu = FMU("../../fmus/ModSim.Examples.InputTest.fmu")
 
-    # Entities
-    fmu_1_entity = FMUEntity(
-        "fmu_1",
-        fmu=fmu,
-        fmu_step_size=15,
-        simulation_step_size=15,
-        start_values={
-            "integrator.k.": 1,
-            "integrator.y_start": 0,
-            "bool_setpoint": False,
-        },
-    )
-    fmu_2_entity = FMUEntity(
-        "fmu_2",
-        fmu=fmu,
-        fmu_step_size=15,
-        simulation_step_size=15,
-        start_values={
-            "integrator.k.": 1,
-            "integrator.y_start": 0,
-            "bool_setpoint": False,
-        },
-    )
-
     def set_bool(self):
         self.ctx.state["fmu_1.inputs.bool_setpoint"] = not self.ctx.state["fmu_1.outputs.bool_output"]
 
     inputs = [
         Input(
             "int_1_input",
+            priority=1,
             values=pd.Series(
                 name="fmu_1.inputs.int_setpoint",
                 data=np.random.randint(0, 100, 30),
@@ -85,6 +62,7 @@ def main():
         ),
         Input(
             "float_1_input",
+            priority=1,
             values=pd.Series(
                 name="fmu_1.inputs.real_setpoint",
                 data=np.random.random(20),
@@ -94,6 +72,7 @@ def main():
         ),
         MultiInput(
             "fmu_2_inputs",
+            priority=1,
             values=pd.DataFrame(
                 index=pd.date_range("2021-01-01T00:00:00", freq="5T", periods=10, tz=ZoneInfo("UTC")),
                 data={
@@ -105,13 +84,42 @@ def main():
         ),
         GenericProcess(
             "bool_1_input",
-            set_bool,
+            priority=1,
+            func=set_bool,
             scheduler=every(seconds=60),
+        ),
+    ]
+
+    fmus = [
+        FMUEntity(
+            "fmu_1",
+            priority=2,
+            fmu=fmu,
+            fmu_step_size=15,
+            simulation_step_size=15,
+            start_values={
+                "integrator.k.": 1,
+                "integrator.y_start": 0,
+                "bool_setpoint": False,
+            },
+        ),
+        FMUEntity(
+            "fmu_2",
+            priority=2,
+            fmu=fmu,
+            fmu_step_size=15,
+            simulation_step_size=15,
+            start_values={
+                "integrator.k.": 1,
+                "integrator.y_start": 0,
+                "bool_setpoint": False,
+            },
         ),
     ]
 
     sensor = StateObserver(
         "sensor",
+        priority=-1,
         measurements=[
             Measurement("fmu_1.inputs.int_setpoint", store_as="int_setpoint_input"),
             Measurement("fmu_1.inputs.real_setpoint", store_as="real_setpoint_input"),
@@ -137,8 +145,7 @@ def main():
         db=ObservationStore(),
         entities=[
             *inputs,
-            fmu_1_entity,
-            fmu_2_entity,
+            *fmus,
             sensor,
         ],
     )

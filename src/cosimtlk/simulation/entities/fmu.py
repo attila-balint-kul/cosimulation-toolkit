@@ -17,25 +17,31 @@ class FMUEntity(Entity):
     def __init__(
         self,
         name: str,
+        priority: int,
         *,
         fmu: FMUBase,
         start_values: dict[str, FMUInputType],
         fmu_step_size: int,
         simulation_step_size: int,
-        namespace: str | None = None,
-        input_namespace: str = "inputs",
-        output_namespace: str = "outputs",
     ):
-        super().__init__(name)
+        """An entity that simulates an FMU.
+
+        Args:
+            name: The name of the entity.
+            priority: The priority of the entity in the simulation.
+            fmu: The FMU to simulate.
+            start_values: The initial values of the FMU.
+            fmu_step_size: The step size of the FMU.
+            simulation_step_size: The step size of the simulation.
+        """
+        super().__init__(name, priority)
         self.fmu = fmu
         self.fmu_instance = None
         self.start_values = start_values
         self.fmu_step_size = fmu_step_size
         self.simulation_step_size = simulation_step_size
-
-        self.namespace = namespace or self.name
-        self.input_namespace = namespaced(self.namespace, input_namespace)
-        self.output_namespace = namespaced(self.namespace, output_namespace)
+        self.input_namespace = namespaced(self.name, "inputs")
+        self.output_namespace = namespaced(self.name, "outputs")
 
     @property
     def processes(self) -> list[Callable[[], Generator]]:

@@ -22,7 +22,7 @@ class EntityLogger(logging.LoggerAdapter):
 
 
 class Entity(metaclass=ABCMeta):
-    def __init__(self, name: str, attributes: dict | None = None) -> None:
+    def __init__(self, name: str, priority: int) -> None:
         """Entity base class that defines the interface for all entities.
 
         Abstract base class for all entities in the simulation. An entity is
@@ -34,10 +34,10 @@ class Entity(metaclass=ABCMeta):
 
         Args:
             name: Name of the entity for identification purposes.
-            attributes: Dictionary of attributes that can be used to store.
+            priority: Priority of the entity in task scheduling.
         """
         self._name = name
-        self._attributes = attributes or {}
+        self._priority = priority
         self._context: Simulator | None = None
         self._logger: EntityLogger | None = None
 
@@ -51,9 +51,9 @@ class Entity(metaclass=ABCMeta):
         return self._name
 
     @property
-    def attributes(self) -> dict:
-        """Attributes of the entity."""
-        return self._attributes
+    def priority(self) -> int:
+        """Priority of the entity in task scheduling."""
+        return self._priority
 
     @property
     def ctx(self) -> Simulator:
@@ -145,4 +145,4 @@ class Source(Entity, metaclass=ABCMeta):
             entity = self.build_entity()
             self._build_count += 1
             self.ctx.add_entity(entity)
-            self.log.debug(f"created entity={entity} with attributes={entity.attributes}")
+            self.log.debug(f"created entity={entity} with priority={entity.priority}")

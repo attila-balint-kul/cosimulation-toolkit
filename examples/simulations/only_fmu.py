@@ -39,6 +39,7 @@ class State(SimulationState):
 def main():
     fmu_entity = FMUEntity(
         "fmu",
+        priority=1,
         fmu=FMU("../../fmus/ModSim.Examples.InputTest.fmu"),
         fmu_step_size=60,
         simulation_step_size=60,

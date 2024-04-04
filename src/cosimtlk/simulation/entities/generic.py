@@ -8,6 +8,7 @@ class GenericProcess(Entity):
     def __init__(
         self,
         name: str,
+        priority: int,
         func: Callable,
         *,
         scheduler: Callable,
@@ -17,10 +18,11 @@ class GenericProcess(Entity):
 
         Args:
             name: Name of the controller for identification purposes.
+            priority: Priority of the controller in task scheduling.
             func: The function to be scheduled.
             scheduler: A scheduler function that returns a generator such as 'every' or 'cron' from utils.
         """
-        super().__init__(name)
+        super().__init__(name, priority)
         self.scheduler = scheduler
         self._func = func
         for key, value in kwargs.items():
