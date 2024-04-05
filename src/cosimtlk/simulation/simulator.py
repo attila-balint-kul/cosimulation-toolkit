@@ -55,11 +55,12 @@ class Simulator:
     def __repr__(self) -> str:
         return f"<Simulator t={self.current_datetime} entities=[{self._entities.keys()}]>"
 
-    def add_entity(self, entity: Entity) -> "Simulator":
+    def add_entity(self, entity: Entity, delay: int | None = None) -> "Simulator":
         """Add an entity to the simulation.
 
         Args:
             entity: The entity to add to the simulation.
+            delay: Allow the entity to start after a delay.
 
         Returns:
             The simulator object.
@@ -71,7 +72,8 @@ class Simulator:
 
         entity.initialize(self)
         for process in entity.processes:
-            start_delayed(self._environment, process(), float(self._process_delays[entity.priority]))
+            total_delay = delay or 0 + float(self._process_delays[entity.priority])
+            start_delayed(self._environment, process(), total_delay)
         return self
 
     @property
