@@ -45,7 +45,7 @@ class SimulatorService:
         }
         return self.get(_id)
 
-    def list(self) -> list[Record]:  # noqa: A003
+    def list(self) -> list[Record]:
         return [self.get(_id) for _id, simulator_record in self._db.items()]
 
     def get(self, id: str) -> Record:  # noqa: A002

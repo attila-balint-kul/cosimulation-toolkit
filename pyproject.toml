@@ -29,8 +29,8 @@ classifiers = [
     "License :: OSI Approved :: BSD License",
 ]
 dependencies = [
-    "attrs>=23.0.0,<24.0.0",
-    "cattrs>=23.0.0,<24.0.0",
+    "attrs>=23.0.0",
+    "cattrs>=23.0.0",
     "cron_converter>=1.0.0,<2.0.0",
     "FMPy>=0.3.0,<0.4.0",
     "pandas>=1.4.0,<3.0.0",
@@ -101,35 +101,30 @@ python = ["3.10", "3.11"]
 [tool.hatch.envs.lint]
 detached = true
 dependencies = [
-    "black[jupyter]>=23.1.0",
     "mypy>=1.0.0",
-    "ruff>=0.0.243",
+    "ruff>=0.9.0",
 ]
 [tool.hatch.envs.lint.scripts]
 typing = "mypy --install-types --non-interactive {args:src/cosimtlk tests}"
 style = [
-    "ruff {args:.}",
-    "black --check --diff {args:.}",
+    "ruff check {args:.}",
 ]
 fmt = [
-    "black {args:.}",
-    "ruff --fix {args:.}",
+    "ruff check --fix {args:.}",
     "style",
 ]
 all = [
     "style",
-    "typing",
+    "fmt",
 ]
 
 
-[tool.black]
-target-version = ["py310"]
-line-length = 120
-skip-string-normalization = true
-
 [tool.ruff]
-target-version = "py310"
 line-length = 120
+target-version = "py311"
+show-fixes = true
+
+[tool.ruff.lint]
 select = [
     "A",
     "ARG",
@@ -172,13 +167,13 @@ unfixable = [
     "F401",
 ]
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 known-first-party = ["cosimtlk"]
 
-[tool.ruff.flake8-tidy-imports]
+[tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 # Tests can use magic values, assertions, and relative imports
 "tests/**/*" = ["PLR2004", "S101", "TID252"]
 

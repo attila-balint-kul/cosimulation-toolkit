@@ -6,7 +6,7 @@ from cosimtlk.models import FMUInputType
 
 
 class SimulatorModel(BaseModel):
-    id: str  # noqa: A003
+    id: str
     fmu: str
     created_at: datetime
 

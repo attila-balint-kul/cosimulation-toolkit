@@ -59,7 +59,7 @@ tests:
 #################################################################################
 
 ## Build source distribution and wheel
-build: lint test
+build: lint tests
 	hatch build
 
 ## Upload source distribution and wheel to PyPI

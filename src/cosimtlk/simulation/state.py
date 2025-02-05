@@ -21,6 +21,6 @@ class SimulationState:
             return current
         return getattr(self, key)
 
-    def set(self, **states: Any) -> None:  # noqa: A003
+    def set(self, **states: Any) -> None:
         for key, value in states.items():
             self.__setitem__(key, value)

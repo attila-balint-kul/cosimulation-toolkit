@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from typing import Callable, Generator
+from collections.abc import Callable, Generator
 
 from cosimtlk.simulation.entities import Entity
 
