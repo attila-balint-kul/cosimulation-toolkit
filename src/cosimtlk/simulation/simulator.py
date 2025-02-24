@@ -43,8 +43,10 @@ class Simulator:
         self._state = state
 
         # Add entities to the simulation
+        self._initialized = False
         self._process_delays = np.arange(0.0005, 0.9995, 0.0005)
         self._entities: dict[str, Entity] = {}
+        self._entity_delays: dict[str, int] = {}
         for entity in entities or []:
             self.add_entity(entity)
 
@@ -54,6 +56,18 @@ class Simulator:
 
     def __repr__(self) -> str:
         return f"<Simulator t={self.current_datetime} entities=[{self._entities.keys()}]>"
+
+    def initialize(self):
+        if self._initialized:
+            msg = "The simulator has already been initialized."
+            raise ValueError(msg)
+
+        for name, entity in self._entities.items():
+            entity.initialize(self)
+            for process in entity.processes:
+                total_delay = self._entity_delays[name] + float(self._process_delays[entity.priority])
+                start_delayed(self._environment, process(), total_delay)
+        self._initialized = True
 
     def add_entity(self, entity: Entity, delay: int | None = None) -> "Simulator":
         """Add an entity to the simulation.
@@ -69,11 +83,7 @@ class Simulator:
             msg = f"Entity with name {entity.name} already exists."
             raise ValueError(msg)
         self._entities[entity.name] = entity
-
-        entity.initialize(self)
-        for process in entity.processes:
-            total_delay = delay or 0 + float(self._process_delays[entity.priority])
-            start_delayed(self._environment, process(), total_delay)
+        self._entity_delays[entity.name] = delay or 0
         return self
 
     @property
@@ -149,6 +159,8 @@ class Simulator:
             until: The timestamp until the simulation should run.
             show_progress_bar: Whether to show a progress bar.
         """
+        self.initialize()
+
         if isinstance(until, datetime):
             if until.tzinfo is not None and until.tzinfo != self.tzinfo:
                 msg = f"Until must be in the same timezone as the initial time. {self.tzinfo} != {until.tzinfo}"
@@ -166,6 +178,8 @@ class Simulator:
             duration: The duration for which the simulation should run.
             show_progress_bar: Whether to show a progress bar.
         """
+        self.initialize()
+
         if isinstance(duration, timedelta):
             duration = self._td_to_duration(duration)
         else:
