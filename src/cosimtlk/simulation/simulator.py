@@ -178,8 +178,6 @@ class Simulator:
             duration: The duration for which the simulation should run.
             show_progress_bar: Whether to show a progress bar.
         """
-        self.initialize()
-
         if isinstance(duration, timedelta):
             duration = self._td_to_duration(duration)
         else:
